@@ -65,6 +65,8 @@ export default defineNuxtConfig({
         { rel: 'apple-touch-icon', sizes: '180x180', href: '/favicon/apple-touch-icon.png' },
         { rel: 'manifest', href: '/favicon/site.webmanifest' },
         { rel: 'preload', as: 'font', type: 'font/woff2', href: '/fonts/Azbuka04.woff2', crossorigin: 'anonymous' },
+        { rel: 'preload', as: 'font', type: 'font/woff2', href: '/fonts/cormorant-normal-400.woff2', crossorigin: 'anonymous' },
+        { rel: 'preload', as: 'font', type: 'font/woff2', href: '/fonts/cormorant-italic-400.woff2', crossorigin: 'anonymous' },
       ],
     },
   },

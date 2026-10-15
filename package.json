@@ -12,7 +12,6 @@
     "test": "pnpm build && node --test tests/recommendations.test.mjs tests/server.test.mjs"
   },
   "dependencies": {
-    "@fontsource-variable/cormorant-garamond": "^5.3.0",
     "@nuxt/image": "^2.1.0",
     "@tailwindcss/vite": "^4.3.3",
     "nuxt": "^4.6.1",

@@ -1,11 +1,27 @@
 @import 'tailwindcss';
-@import '@fontsource-variable/cormorant-garamond/index.css';
-@import '@fontsource-variable/cormorant-garamond/wght-italic.css';
 @import 'swiper/css';
 @import 'swiper/css/navigation';
 @import 'swiper/css/pagination';
 @import 'swiper/css/thumbs';
 @import 'swiper/css/free-mode';
+
+/* Cormorant Garamond 400: на сайте только эта насыщенность. Латиница и кириллица (в т.ч. узбекские буквы) в одном файле на начертание.
+   Файлы собраны из @fontsource-variable (OFL): фиксирован wght=400 и оставлены нужные символы, поэтому ~25 КБ вместо ~120 КБ.
+   Имя в public/fonts кешируется как immutable: при замене файла меняйте имя. */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/cormorant-normal-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/cormorant-italic-400.woff2') format('woff2');
+}
 
 @font-face {
   font-family: 'Azbuka04';
@@ -15,7 +31,7 @@
 
 @theme {
   --font-sans: 'Azbuka04', ui-sans-serif, system-ui, sans-serif;
-  --font-serif: 'Cormorant Garamond Variable', 'Cormorant Garamond', Georgia, serif;
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
   --color-gold: #e3b771;
   --color-gold-dark: #c99a4f;
   --color-ink: #212529;
