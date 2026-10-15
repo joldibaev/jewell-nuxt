@@ -4,6 +4,8 @@ import tailwindcss from '@tailwindcss/vite'
 // Он нужен на этапе сборки, поэтому в Docker/Coolify NUXT_STRAPI_URL должна быть доступна во время build.
 const strapiUrl = process.env.NUXT_STRAPI_URL
 
+const pageCache = { maxAge: 60, staleMaxAge: 60 * 60, swr: true }
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
@@ -33,6 +35,13 @@ export default defineNuxtConfig({
     compressPublicAssets: true,
   },
   routeRules: {
+    // HTML публичных страниц считается раз в минуту, дальше отдаётся из кеша (устаревший ответ обновляется в фоне).
+    // Каталог не включён: его ключ зависит от фильтров, а данные и так кешируются в /api/catalog.
+    // Query у этих страниц убирает server/middleware/strip-query.ts, иначе каждый ?utm=… получил бы свою запись.
+    '/': { cache: pageCache },
+    '/about-us': { cache: pageCache },
+    '/contacts': { cache: pageCache },
+    '/products/**': { cache: pageCache },
     // Файлы из public без хеша в имени: месяц кеша, при замене картинки меняйте имя файла.
     '/img/**': { headers: { 'cache-control': 'public, max-age=2592000' } },
     '/favicon/**': { headers: { 'cache-control': 'public, max-age=2592000' } },

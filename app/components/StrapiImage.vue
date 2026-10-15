@@ -5,6 +5,8 @@ import type { Media } from '#shared/types/catalog'
 // он отдаёт webp нужной ширины. `sizes` в синтаксисе Nuxt Image: «xs:100vw sm:50vw xl:400px».
 // ВАЖНО: каждая запись `sizes` с явным брейкпоинтом (xs:/sm:/…). Голое «100vw» даёт кандидатов w_1/w_2, то есть картинку шириной 2px.
 // width/height оригинала НЕ передаём: IPX воспринял бы их как целевой размер и отдал бы полноразмерную картинку.
+// densities всегда x1: в srcset с `w`-дескрипторами браузер сам берёт файл под плотность экрана (iPhone 390px → 1184w),
+// а «2x»-копии вдвое увеличивали число размеров, которые IPX кодирует и хранит на диске.
 // Место под картинку резервирует контейнер (aspect-ratio), поэтому сдвигов вёрстки нет.
 const props = withDefaults(defineProps<{
   media: Media
@@ -30,7 +32,7 @@ const alt = computed(() => props.alt ?? props.media.alternativeText ?? '')
     format="webp"
     :sizes="sizes"
     :width="width"
-    :densities="width ? 'x1' : undefined"
+    :densities="'x1'"
     :alt="alt"
     :loading="priority ? 'eager' : 'lazy'"
     :fetchpriority="priority ? 'high' : 'auto'"
