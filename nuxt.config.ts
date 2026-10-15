@@ -1,5 +1,52 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
+import tailwindcss from '@tailwindcss/vite'
+
+// IPX скачивает оригиналы только с разрешённых доменов. Домен Strapi берём из того же окружения, что и рантайм.
+// Он нужен на этапе сборки, поэтому в Docker/Coolify NUXT_STRAPI_URL должна быть доступна во время build.
+const strapiUrl = process.env.NUXT_STRAPI_URL
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
-  devtools: { enabled: true }
+  devtools: { enabled: true },
+  modules: ['@nuxt/image'],
+  css: ['~/assets/css/main.css'],
+  image: {
+    // Без NUXT_STRAPI_URL домен не разрешён и картинки не загрузятся: это видимая ошибка, а не подмена адреса.
+    domains: strapiUrl ? [new URL(strapiUrl).host] : [],
+    // Только webp: IPX не кеширует результат на сервере, а кодирование avif из оригиналов в 4608px занимает секунды на каждый размер.
+    // Если перед сайтом будет CDN (кеширует /_ipx/**), можно вернуть ['avif', 'webp'].
+    format: ['webp'],
+    quality: 75,
+    // Кеш на год: имя файла в Strapi содержит хеш, при замене картинки URL меняется.
+    ipx: { maxAge: 60 * 60 * 24 * 365 },
+  },
+  vite: {
+    plugins: [tailwindcss()],
+    // Swiper подхватывается Vite «на лету» и перезагружает страницу в dev; предсобираем его заранее.
+    optimizeDeps: { include: ['swiper/modules', 'swiper/vue'] },
+  },
+  // viewTransition отключён: в связке с асинхронными страницами после «Назад» оставался DOM предыдущей страницы.
+  experimental: { viewTransition: false },
+  nitro: {
+    // Статику (_nuxt, public) отдаём уже сжатой gzip/brotli, а не полагаемся на прокси.
+    compressPublicAssets: true,
+  },
+  routeRules: {
+    // Файлы из public без хеша в имени: месяц кеша, при замене картинки меняйте имя файла.
+    '/img/**': { headers: { 'cache-control': 'public, max-age=2592000' } },
+    '/fonts/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } },
+  },
+  runtimeConfig: {
+    // Значения задаются только окружением (NUXT_STRAPI_URL, NUXT_STRAPI_TOKEN): подставных адресов по умолчанию нет.
+    strapiUrl: '',
+    strapiToken: '',
+    // Отдельный токен только с правом create на заявки; читающий токен писать не должен.
+    strapiInquiryToken: '',
+  },
+  app: {
+    head: {
+      htmlAttrs: { lang: 'ru' },
+      titleTemplate: '%s — JeWell',
+      link: [{ rel: 'preload', as: 'font', type: 'font/woff2', href: '/fonts/Azbuka04.woff2', crossorigin: 'anonymous' }],
+    },
+  },
 })

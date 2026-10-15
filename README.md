@@ -1,75 +1,82 @@
-# Nuxt Minimal Starter
+# Jewell / Nuxt
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Каркас многостраничного сайта на Nuxt 4 с SSR. Верстка и Tailwind будут добавлены отдельно.
 
-## Setup
+## Запуск
 
-Make sure to install dependencies:
+1. Скопировать `.env.example` в `.env`.
+2. Указать `NUXT_STRAPI_URL` (корень Strapi, без `/api`) и `NUXT_STRAPI_TOKEN`.
+3. Запустить Strapi и выполнить `pnpm dev`.
 
-```bash
-# npm
-npm install
+Используйте Custom Content API token с разрешениями только на чтение:
+- products, categories, collections, brands, gems, materials: find;
+- home-page, about-page, bestseller, site-setting: find.
 
-# pnpm
-pnpm install
+Не выдавайте этому токену доступ к customers/inquiries и операциям записи.
+Токен доступен только серверу Nuxt. Без токена API возвращает 503, а страницы показывают состояние ошибки.
+Опубликуйте главную страницу, бестселлеры и товары. Незаполненные single types нужно создать в Strapi.
+Сборка: `pnpm build`; запуск production: `node .output/server/index.mjs`.
+Для этого слоя нужен сервер Nuxt; статический `generate` не заменяет API.
 
-# yarn
-yarn install
+## Структура
 
-# bun
-bun install
-```
+- `app/pages/index.vue`: главная, баннеры и подборки готовы в данных.
+- `app/pages/catalogs.vue`: каталог.
+- `app/pages/about-us.vue`: место под согласованный контент.
+- `app/pages/contacts.vue`: контакты из site-setting.
+- `app/layouts/default.vue`: общий каркас.
+- `app/composables/useCatalog.ts`: загрузка каталога, применение/сброс фильтров, пагинация.
+- `server/api`: собственный API сайта.
+- `server/utils`: проверка параметров, запросы и преобразование ответов Strapi.
+- `shared/types`, `shared/utils`: общие типы и формирование URL.
+- `tests/server.test.mjs`: проверка production API и SSR с тестовым сервером Strapi.
 
-## Development Server
+Страницы намеренно содержат минимальный HTML. Авторизации, кабинета, избранного и формы отправки заявок пока нет.
+Избранное в будущем можно хранить в localStorage; чтение storage выполняется только на клиенте.
+Отдельной CMS-модели «О нас» пока нет. Текст можно добавить в страницу или позже вынести в Strapi.
 
-Start the development server on `http://localhost:3000`:
+## API
 
-```bash
-# npm
-npm run dev
+- `GET /api/home`: banners, categories, collections, bestsellers, inStock.
+- `GET /api/site-settings`: контакты и адреса социальных сетей.
+- `GET /api/catalog-options`: категории, коллекции, бренды, камни, материалы.
+- `GET /api/catalog`: products, pagination.
 
-# pnpm
-pnpm dev
+Каталог принимает:
+- `categories`, `collections`, `brands`, `gems`, `materials`: documentId из catalog-options; несколько значений — повторяющиеся query-параметры.
+- `search`: поиск по name/description.
+- `stock`: all, yes, no.
+- `minPrice`, `maxPrice`: целые неотрицательные суммы в UZS, без ограничения по умолчанию.
+- `sort`: newest, price-asc, price-desc.
+- `page`: 1–10000, размер страницы фиксирован — 20.
 
-# yarn
-yarn dev
+Пример: `/catalogs?categories=DOCUMENT_ID&stock=yes&maxPrice=5000000`.
 
-# bun
-bun run dev
-```
+Значения внутри группы объединяются через ИЛИ, группы — через И.
+Фильтры выполняются в Strapi до пагинации. Все запросы товаров используют published.
+Старые Django UUID и параметры вроде collection__id пока не поддерживаются: сначала нужен импорт с legacyId или таблицей соответствия.
+Порядок по умолчанию — новинки, затем id для стабильной пагинации; старая группировка Django по коллекции не воспроизведена.
+При будущей верстке вызовите applyFilters с CatalogFilters: он сбрасывает page на 1 и обновляет URL.
+resetFilters очищает URL, setPage сохраняет фильтры. Назад/Вперед браузера повторно загружает данные.
+Готовые состояния: загрузка, ошибка, повтор запроса и пустая выдача.
 
-## Production
+Кеш пока не включен: сначала проверить реальные данные и требования к актуальности.
+Фильтр gems → gem необходимо проверить с реальной базой Strapi: тестовый сервер проверяет контракт запроса, но не выполнение SQL.
 
-Build the application for production:
+## Проверки
 
-```bash
-# npm
-npm run build
+`pnpm typecheck` — типы приложения и сервера.
+`pnpm test` — production-сборка и интеграционные проверки на локальном тестовом Strapi.
 
-# pnpm
-pnpm build
+## Принципы данных
 
-# yarn
-yarn build
+- Все данные на страницах приходят из Strapi. Подставных значений, моков и запасных вариантов в коде нет: если поля нет, блок не показывается, если Strapi недоступен — ошибка.
+- «Возможно, вам понравится» на странице товара — до 8 товаров. Сначала идут товары из поля «Рекомендуемые товары» в заданном порядке, оставшиеся места заполняет автоподбор (`server/utils/recommendations.ts`). Кандидаты — опубликованные товары той же категории, коллекции или бренда. Баллы: коллекция +5, каждая общая категория +4, бренд +3, каждый общий материал и камень +2, цена в пределах ±30% +3 (±60% +1), в наличии +2. Одной категории автоподбор даёт не больше 3 мест, пока есть другие похожие товары. Если запрос кандидатов не удался, остаются только ручные рекомендации. Подходящих товаров нет — блок скрыт.
+- Адрес и токены задаются только окружением (`NUXT_STRAPI_URL`, `NUXT_STRAPI_TOKEN`, `NUXT_STRAPI_INQUIRY_TOKEN`). `NUXT_STRAPI_URL` нужна и при сборке: от неё зависит список доменов для оптимизации картинок.
+- `GET /api/products/:slug`: товар, его характеристики и рекомендуемые товары (ручные + автоподбор).
 
-# bun
-bun run build
-```
 
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+## Производительность
+- Картинки из Strapi идут только через `StrapiImage` → `NuxtImg` + IPX: webp нужной ширины, `srcset`/`sizes` строит фреймворк. Файлы из `public/img` (логотипы, фон) уже в webp.
+- Фон страницы (`/img/bg.webp`) подключён внутри `@media (min-width: 80rem)`: на узких экранах он не скачивается.
+- Статика (`_nuxt`, `public`) сжимается при сборке (`compressPublicAssets`: gzip/brotli). HTML-ответы Nitro не сжимает: включите gzip/brotli на прокси (Traefik в Coolify), это примерно ×6 для HTML каталога.

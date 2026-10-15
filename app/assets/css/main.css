@@ -1,0 +1,114 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/cormorant-garamond/index.css';
+@import '@fontsource-variable/cormorant-garamond/wght-italic.css';
+@import 'swiper/css';
+@import 'swiper/css/navigation';
+@import 'swiper/css/pagination';
+@import 'swiper/css/thumbs';
+@import 'swiper/css/free-mode';
+
+@font-face {
+  font-family: 'Azbuka04';
+  src: url('/fonts/Azbuka04.woff2') format('woff2');
+  font-display: swap;
+}
+
+@theme {
+  --font-sans: 'Azbuka04', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Cormorant Garamond Variable', 'Cormorant Garamond', Georgia, serif;
+  --color-gold: #e3b771;
+  --color-gold-dark: #c99a4f;
+  --color-ink: #212529;
+  --color-muted: #707070;
+  --color-nav: #8e8e8e;
+  /* Контейнер Tailwind растёт вместе с брейкпоинтами; выше xl (1280px) он больше не увеличивается. */
+  --breakpoint-2xl: initial;
+}
+
+/* Стандартный контейнер Tailwind v4: max-width по брейкпоинтам, центрирование и отступы заданы здесь. */
+@utility container {
+  margin-inline: auto;
+  padding-inline: 1rem;
+  @variant sm { padding-inline: 1.5rem; }
+  @variant lg { padding-inline: 2rem; }
+  @variant xl { padding-inline: 3rem; }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-stone-100 font-sans text-ink antialiased;
+    background-color: #f5f2ee;
+  }
+  /* Фон на своём композитном слое: `background-attachment: fixed` перерисовывает всю страницу на каждом кадре скролла. */
+  /* Фон виден только по бокам контейнера (шире 80rem). Правило внутри media: на узких экранах файл вообще не скачивается. */
+  @media (min-width: 80rem) {
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background: url('/img/bg.webp') center / cover no-repeat;
+      pointer-events: none;
+    }
+  }
+  h1, h2, h3 {
+    @apply font-serif text-muted text-balance;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-gold;
+  }
+  html:has(dialog[open]) { overflow: hidden; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center rounded-md bg-gold px-6 py-2.5 text-white transition-colors hover:bg-gold-dark;
+  }
+  /* Мягкий чекбокс: тонкая светлая рамка, скругление, золотая заливка и белая галочка вместо нативной. */
+  .checkbox {
+    @apply size-[1.125rem] shrink-0 cursor-pointer appearance-none rounded-[5px] border border-stone-300 bg-white bg-center bg-no-repeat transition-colors;
+    @apply hover:border-gold checked:border-gold checked:bg-gold focus-visible:ring-2 focus-visible:ring-gold/30;
+  }
+  .checkbox:checked {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3.5 8.5 3 3 6-7'/%3E%3C/svg%3E");
+    background-size: 80%;
+  }
+  .section-title {
+    @apply mb-6 text-3xl uppercase tracking-wide md:text-4xl;
+  }
+}
+
+/* Swiper theme: white arrows, thin segmented progress bars like the original site. */
+.hero-swiper {
+  --swiper-navigation-color: #fff;
+  --swiper-navigation-size: 28px;
+  --swiper-pagination-color: #fff;
+  --swiper-pagination-bullet-inactive-color: #fff;
+  --swiper-pagination-bullet-inactive-opacity: 0.45;
+  --swiper-pagination-bullet-horizontal-gap: 4px;
+}
+.hero-swiper .swiper-pagination { display: flex; padding-inline: 20%; }
+.hero-swiper .swiper-pagination-bullet { flex: 1; width: auto; height: 3px; border-radius: 0; }
+
+/* Галерея товара: стрелки белые с лёгкой тенью, чтобы читались и на светлых фото. */
+.product-gallery {
+  --swiper-navigation-color: #fff;
+  --swiper-navigation-size: 24px;
+}
+.product-gallery .swiper-button-prev,
+.product-gallery .swiper-button-next {
+  filter: drop-shadow(0 1px 3px rgb(0 0 0 / 0.45));
+}
+
+/* Миниатюры до инициализации Swiper (SSR): те же 4 в ряд, чтобы не было скачка вёрстки после гидратации. */
+.product-thumbs:not(.swiper-initialized) .swiper-slide {
+  width: calc((100% - 30px) / 4);
+  margin-right: 10px;
+}
