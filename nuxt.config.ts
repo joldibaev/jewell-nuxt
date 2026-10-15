@@ -33,6 +33,7 @@ export default defineNuxtConfig({
   routeRules: {
     // Файлы из public без хеша в имени: месяц кеша, при замене картинки меняйте имя файла.
     '/img/**': { headers: { 'cache-control': 'public, max-age=2592000' } },
+    '/favicon/**': { headers: { 'cache-control': 'public, max-age=2592000' } },
     '/fonts/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } },
   },
   runtimeConfig: {
@@ -46,7 +47,14 @@ export default defineNuxtConfig({
     head: {
       htmlAttrs: { lang: 'ru' },
       titleTemplate: '%s — JeWell',
-      link: [{ rel: 'preload', as: 'font', type: 'font/woff2', href: '/fonts/Azbuka04.woff2', crossorigin: 'anonymous' }],
+      link: [
+        { rel: 'icon', href: '/favicon.ico', sizes: 'any' },
+        { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon/favicon-32x32.png' },
+        { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/favicon/favicon-16x16.png' },
+        { rel: 'apple-touch-icon', sizes: '180x180', href: '/favicon/apple-touch-icon.png' },
+        { rel: 'manifest', href: '/favicon/site.webmanifest' },
+        { rel: 'preload', as: 'font', type: 'font/woff2', href: '/fonts/Azbuka04.woff2', crossorigin: 'anonymous' },
+      ],
     },
   },
 })
