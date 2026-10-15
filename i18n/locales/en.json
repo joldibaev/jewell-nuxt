@@ -25,7 +25,10 @@
     "homeOgTitle": "JeWell — elegant jewelry",
     "catalogDescription": "JeWell jewelry catalog: filter by type, collection, gemstones, brand and price.",
     "notFound": "Page not found",
-    "error": "Error"
+    "error": "Error",
+    "aboutDescription": "JeWell is a jewelry and accessories store: our story, our partners and the way we work.",
+    "contactsDescription": "Contacts of the JeWell jewelry store: address, phone, opening hours, messengers and a consultation request form.",
+    "productDescription": "{name} — JeWell jewelry. Price: {price} {currency}."
   },
   "header": {
     "logoLabel": "JeWell — to the home page",
@@ -52,7 +55,8 @@
     "viewAll": "View all",
     "banners": "Banners",
     "prevBanner": "Previous banner",
-    "nextBanner": "Next banner"
+    "nextBanner": "Next banner",
+    "bannerAlt": "JeWell banner {n}"
   },
   "collection": {
     "label": "Collection",
@@ -138,7 +142,8 @@
     "address": "Address",
     "store": "Our store",
     "mapTitle": "Map",
-    "showMap": "Show map"
+    "showMap": "Show map",
+    "storePhotoAlt": "JeWell store — photo {n}"
   },
   "form": {
     "title": "Quick consultation",

@@ -40,7 +40,7 @@ export default defineEventHandler(async (event) => {
   const entries = paths.flatMap(({ path, lastmod }) => LOCALES.map(locale => ({
     loc: localized(locale, path),
     lastmod,
-    alternates: LOCALES.map(alt => ({ hreflang: alt, href: localized(alt, path) })),
+    alternates: [...LOCALES.map(alt => ({ hreflang: alt as string, href: localized(alt, path) })), { hreflang: 'x-default', href: localized(DEFAULT_LOCALE, path) }],
   })))
   setHeader(event, 'content-type', 'application/xml; charset=utf-8')
   setHeader(event, 'cache-control', 'public, max-age=3600')

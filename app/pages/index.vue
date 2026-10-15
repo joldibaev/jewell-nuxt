@@ -2,14 +2,39 @@
 import { categoryTileClasses } from '~/utils/categoryGrid'
 
 const { t, locale } = useI18n()
-useSeoMeta({
-  title: () => t('seo.homeTitle'),
-  description: () => t('seo.homeDescription'),
-  ogTitle: () => t('seo.homeOgTitle'),
-  ogDescription: () => t('seo.homeDescription'),
-})
+const localePath = useLocalePath()
 const { data, status, error, refresh } = await useFetch('/api/home', { query: { locale } })
 const { data: settings } = await useFetch('/api/site-settings', { query: { locale } })
+
+const socialImage = useSocialImage()
+usePageSeo({ title: () => t('seo.homeTitle'), description: () => t('seo.homeDescription'), image: () => socialImage(data.value?.banners[0]) })
+// og:title главной — с названием бренда (в title оно добавляется шаблоном).
+useSeoMeta({ ogTitle: () => t('seo.homeOgTitle'), twitterTitle: () => t('seo.homeOgTitle') })
+
+// Организация и сайт: основа для карточки бренда в выдаче. Поиска по сайту через адресную строку нет, поэтому SearchAction не добавляем.
+const absolute = useAbsoluteUrl()
+useJsonLd(() => [
+  {
+    '@type': 'Organization',
+    '@id': absolute('/#organization'),
+    name: 'JeWell',
+    url: absolute(localePath('/')),
+    logo: absolute('/favicon/android-chrome-512x512.png'),
+    telephone: settings.value?.phone || undefined,
+    email: settings.value?.email || undefined,
+    sameAs: [settings.value?.instagramUrl, settings.value?.telegramUrl, settings.value?.facebookUrl].filter(Boolean).length
+      ? [settings.value?.instagramUrl, settings.value?.telegramUrl, settings.value?.facebookUrl].filter(Boolean)
+      : undefined,
+  },
+  {
+    '@type': 'WebSite',
+    '@id': absolute('/#website'),
+    name: 'JeWell',
+    url: absolute(localePath('/')),
+    inLanguage: locale.value,
+    publisher: { '@id': absolute('/#organization') },
+  },
+])
 </script>
 
 <template>

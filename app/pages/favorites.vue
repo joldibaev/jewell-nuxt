@@ -34,5 +34,8 @@ const loading = computed(() => !favorites.ready.value || (favorites.ids.value.le
     {{ t('favorites.empty') }}
     <template #actions><NuxtLinkLocale to="/catalogs" class="btn">{{ t('favorites.toCatalog') }}</NuxtLinkLocale></template>
   </StatusMessage>
-  <ProductGrid v-else :products="products" :columns="4" />
+  <template v-else>
+    <h2 class="sr-only">{{ t('catalog.products') }}</h2>
+    <ProductGrid :products="products" :columns="4" />
+  </template>
 </template>

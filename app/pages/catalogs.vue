@@ -4,20 +4,8 @@ import type { CatalogSort } from '#shared/types/catalog'
 const { t } = useI18n()
 const localePath = useLocalePath()
 const origin = useRequestURL().origin
-useSeoMeta({ title: () => t('common.catalog'), description: () => t('seo.catalogDescription') })
-useHead(() => ({
-  script: [{
-    type: 'application/ld+json',
-    innerHTML: JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: t('common.home'), item: origin + localePath('/') },
-        { '@type': 'ListItem', position: 2, name: t('common.catalog'), item: origin + localePath('/catalogs') },
-      ],
-    }),
-  }],
-}))
+usePageSeo({ title: () => t('common.catalog'), description: () => t('seo.catalogDescription') })
+useJsonLd(() => breadcrumbList(origin, [{ name: t('common.home'), url: localePath('/') }, { name: t('common.catalog'), url: localePath('/catalogs') }]))
 
 const {
   filters, options, items, pagination, hasMore, loadMore, loadingMore, loadMoreError,
@@ -53,6 +41,7 @@ const refreshing = computed(() => status.value === 'pending' && items.value.leng
       </aside>
 
       <section :aria-label="t('catalog.products')">
+        <h2 class="sr-only">{{ t('catalog.products') }}</h2>
         <CatalogToolbar v-model:sort="sort" :total="pagination?.total" @open-filters="filterDrawer?.open()" />
 
         <StatusMessage v-if="error && !items.length" kind="error">

@@ -6,13 +6,13 @@ const { locale, locales } = useI18n()
 const switchLocalePath = useSwitchLocalePath()
 // Язык документа и ссылки на версии страницы на других языках (hreflang) для поисковиков.
 // Адреса версий без query, как и canonical: фильтры каталога не должны попадать в hreflang.
-const withoutQuery = (path: string) => path.split('?')[0]
+const withoutQuery = (path: string) => path.split('?')[0]!.replace(/(.)\/$/, '$1')
 const alternates = computed(() => locales.value.map(item => ({
   code: item.code,
   language: item.language ?? item.code,
   href: origin + withoutQuery(switchLocalePath(item.code)),
 })))
-const canonical = computed(() => origin + route.path)
+const canonical = computed(() => origin + withoutQuery(route.path))
 useHead(() => ({
   htmlAttrs: { lang: locale.value },
   link: [

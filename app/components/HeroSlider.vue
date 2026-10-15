@@ -24,6 +24,7 @@ const { t } = useI18n()
       <StrapiImage
         :media="banner"
         sizes="xs:100vw sm:100vw md:100vw lg:100vw xl:1184px"
+        :alt="banner.alternativeText || t('home.bannerAlt', { n: i + 1 })"
         :priority="i === 0"
         img-class="aspect-16/9 w-full object-cover xl:aspect-21/9"
       />

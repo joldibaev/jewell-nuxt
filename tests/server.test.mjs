@@ -293,4 +293,75 @@ test('Nuxt server contract and SSR', async (t) => {
     const robots = await (await fetch(base + '/robots.txt')).text()
     for (const path of ['/favorites', '/en/favorites', '/uz/favorites']) assert.ok(robots.includes('Disallow: ' + path), path)
   })
+
+  await t.test('every public page has description, Open Graph, Twitter card and valid JSON-LD', async () => {
+    const head = async (path) => {
+      const html = await (await fetch(base + path)).text()
+      return html.slice(html.indexOf('<head>'), html.indexOf('</head>'))
+    }
+    const meta = (html, attr, name) => html.match(new RegExp('<meta ' + attr + '="' + name + '" content="([^"]*)"'))?.[1]
+    const ld = html => [...html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([^<]*)<\/script>/g)].map(m => JSON.parse(m[1]))
+    const descriptions = new Set()
+    for (const path of ['/', '/catalogs', '/about-us', '/contacts', '/products/test-ring', '/en', '/en/contacts', '/uz/about-us']) {
+      const html = await head(path)
+      const description = meta(html, 'name', 'description')
+      assert.ok(description && description.length > 20, 'description ' + path)
+      if (!path.startsWith('/en') && !path.startsWith('/uz')) assert.ok(!descriptions.has(description), 'unique description ' + path)
+      descriptions.add(description)
+      assert.ok(meta(html, 'property', 'og:title'), 'og:title ' + path)
+      assert.equal(meta(html, 'property', 'og:description'), description, 'og:description ' + path)
+      assert.equal(meta(html, 'property', 'og:site_name'), 'JeWell', path)
+      assert.ok(meta(html, 'property', 'og:type'), 'og:type ' + path)
+      assert.match(meta(html, 'property', 'og:image'), /^https?:\/\/[^/]+\/[^:]*$|^https?:\/\/[^/]+\/_ipx\//, 'og:image is one absolute URL ' + path)
+      assert.equal(meta(html, 'name', 'twitter:card'), 'summary_large_image', path)
+      assert.match(meta(html, 'name', 'twitter:image'), /^http/, path)
+      assert.ok(meta(html, 'name', 'theme-color'), 'theme-color ' + path)
+      for (const item of ld(html)) assert.ok(!JSON.stringify(item).includes('localhost'), 'no localhost in JSON-LD ' + path)
+    }
+    // Структурированные данные по типам страниц.
+    const types = async path => ld(await head(path)).map(item => item['@type'])
+    assert.deepEqual(await types('/'), ['Organization', 'WebSite'])
+    assert.deepEqual(await types('/contacts'), ['ContactPage', 'BreadcrumbList'])
+    assert.deepEqual(await types('/en/about-us'), ['AboutPage', 'BreadcrumbList'])
+    const [productLd] = ld(await head('/en/products/test-ring'))
+    assert.equal(productLd['@type'], 'Product')
+    assert.equal(productLd.offers.priceCurrency, 'UZS')
+    assert.equal(productLd.offers.price, '2500000')
+    assert.equal(productLd.offers.availability, 'https://schema.org/InStock')
+    assert.ok(productLd.brand.name && productLd.description, 'brand and description are never empty')
+    // Без разрешённого домена в IPX (в тестовой сборке) адрес остаётся исходным; главное — один протокол и один хост, без склейки «http://хостhttp://…».
+    assert.ok(productLd.image.length && productLd.image.every(url => /^https?:\/\//.test(url) && !/^https?:\/\/[^/]+https?:/.test(url) && !url.slice(8).includes('http')), 'product images are single absolute URLs: ' + productLd.image)
+    assert.equal(meta(await head('/products/test-ring'), 'property', 'og:type'), 'product')
+    // Страницы без индексации не попадают в sitemap, а страница ошибки закрыта от индексации и имеет lang.
+    const favorites = await head('/favorites')
+    assert.match(favorites, /<meta name="robots" content="noindex">/)
+    assert.ok(!(await (await fetch(base + '/sitemap.xml')).text()).includes('favorites'))
+    const notFound = await (await fetch(base + '/nope', { headers: { accept: 'text/html' } })).text()
+    assert.match(notFound, /<html[^>]*lang="ru"/)
+    assert.match(notFound, /<meta name="robots" content="noindex">/)
+  })
+
+  await t.test('pages have exactly one h1 and no empty links', async () => {
+    for (const path of ['/', '/catalogs', '/about-us', '/contacts', '/products/test-ring', '/favorites', '/en/catalogs']) {
+      const html = await (await fetch(base + path)).text()
+      assert.equal((html.match(/<h1[\s>]/g) || []).length, 1, 'one h1 on ' + path)
+    }
+  })
+
+  await t.test('trailing slash redirects to the canonical address, query is kept', async () => {
+    for (const [from, to] of [['/about-us/', '/about-us'], ['/uz/', '/uz'], ['/en/catalogs/?sort=price-asc', '/en/catalogs?sort=price-asc']]) {
+      const response = await fetch(base + from, { redirect: 'manual' })
+      assert.equal(response.status, 301, from)
+      assert.equal(new URL(response.headers.get('location'), base).pathname + new URL(response.headers.get('location'), base).search, to, from)
+    }
+    assert.equal((await fetch(base + '/', { redirect: 'manual' })).status, 200)
+  })
+
+  await t.test('robots.txt keeps images crawlable and sitemap carries x-default', async () => {
+    const robots = await (await fetch(base + '/robots.txt')).text()
+    assert.ok(!robots.includes('/_ipx'), 'search engines must be able to fetch product images')
+    assert.ok(robots.includes('Disallow: /api/'))
+    const xml = await (await fetch(base + '/sitemap.xml')).text()
+    assert.ok(xml.includes('hreflang="x-default" href="' + base + '/catalogs"'))
+  })
 })

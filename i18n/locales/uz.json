@@ -25,7 +25,10 @@
     "homeOgTitle": "JeWell — nafis zargarlik buyumlari",
     "catalogDescription": "JeWell zargarlik buyumlari katalogi: tur, kolleksiya, toshlar, brend va narx bo‘yicha filtrlar.",
     "notFound": "Sahifa topilmadi",
-    "error": "Xatolik"
+    "error": "Xatolik",
+    "aboutDescription": "JeWell — zargarlik buyumlari va aksessuarlar do‘koni: bizning tarix, hamkorlarimiz va ish uslubimiz.",
+    "contactsDescription": "JeWell zargarlik do‘konining kontaktlari: manzil, telefon, ish vaqti, messenjerlar va maslahat so‘rash shakli.",
+    "productDescription": "{name} — JeWell zargarlik buyumi. Narxi: {price} {currency}."
   },
   "header": {
     "logoLabel": "JeWell — bosh sahifaga",
@@ -52,7 +55,8 @@
     "viewAll": "Barchasini ko‘rish",
     "banners": "Bannerlar",
     "prevBanner": "Oldingi banner",
-    "nextBanner": "Keyingi banner"
+    "nextBanner": "Keyingi banner",
+    "bannerAlt": "JeWell banneri {n}"
   },
   "collection": {
     "label": "Kolleksiya",
@@ -138,7 +142,8 @@
     "address": "Manzil",
     "store": "Do‘konimiz",
     "mapTitle": "Xarita",
-    "showMap": "Xaritani ko‘rsatish"
+    "showMap": "Xaritani ko‘rsatish",
+    "storePhotoAlt": "JeWell do‘koni — surat {n}"
   },
   "form": {
     "title": "Tezkor maslahat",

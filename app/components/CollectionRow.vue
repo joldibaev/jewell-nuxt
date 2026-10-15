@@ -11,6 +11,8 @@ const { t } = useI18n()
     <NuxtLinkLocale
       :to="{ path: '/catalogs', query: { collections: collection.documentId } }"
       class="block overflow-hidden rounded-[10px]"
+      tabindex="-1"
+      aria-hidden="true"
       :class="reversed ? 'order-2' : ''"
     >
       <StrapiImage

@@ -74,6 +74,7 @@ export default defineNuxtConfig({
   app: {
     head: {
       titleTemplate: '%s — JeWell',
+      meta: [{ name: 'theme-color', content: '#ffffff' }],
       link: [
         { rel: 'icon', href: '/favicon.ico', sizes: 'any' },
         { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon/favicon-32x32.png' },

@@ -3,8 +3,10 @@ import type { NuxtError } from '#app'
 
 const props = defineProps<{ error: NuxtError }>()
 const notFound = computed(() => props.error.statusCode === 404)
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const localePath = useLocalePath()
+// Страница ошибки рендерится вместо app.vue, поэтому язык документа задаём здесь.
+useHead({ htmlAttrs: { lang: locale } })
 useSeoMeta({ title: () => notFound.value ? t('seo.notFound') : t('seo.error'), robots: 'noindex' })
 </script>
 

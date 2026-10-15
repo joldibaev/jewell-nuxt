@@ -16,58 +16,48 @@ if (error.value || !product.value) {
 }
 
 const origin = useRequestURL().origin
-const img = useImage()
+const socialImage = useSocialImage()
 const first = computed(() => product.value?.gallery[0])
-// Для соцсетей отдаём лёгкую нарезку, а не оригинал на несколько мегабайт.
-const ogImage = computed(() => first.value ? origin + img(first.value.url, { width: 1200, format: 'jpeg' }) : undefined)
+const ogImage = computed(() => first.value ? socialImage(first.value) : undefined)
 const paragraphs = computed(() => (product.value?.description ?? '').split(/\n+/).map(s => s.trim()).filter(Boolean))
 const noteLines = computed(() => (settings.value?.productNote ?? '').split(/\n+/).map(s => s.trim()).filter(Boolean))
-const summary = computed(() => paragraphs.value.join(' ').slice(0, 160))
+// Описание из Strapi бывает пустым: тогда даём поисковикам осмысленный текст из названия и цены, а не пустой тег.
+const summary = computed(() => shortText(paragraphs.value.join(' '))
+  ?? t('seo.productDescription', { name: product.value!.name, price: formatPrice(product.value!.priceUzs, locale.value), currency: t('common.currency') }))
+const productPath = computed(() => localePath(`/products/${route.params.slug}`))
 
-useSeoMeta({
-  title: () => product.value!.name,
-  description: () => summary.value || undefined,
-  ogTitle: () => product.value!.name,
-  ogDescription: () => summary.value || undefined,
-  ogImage,
-  ogType: 'website',
-  twitterCard: 'summary_large_image',
-})
+usePageSeo({ title: () => product.value!.name, description: () => summary.value, image: () => ogImage.value, type: 'product' })
 useHead(() => ({
-  script: [
-    {
-      type: 'application/ld+json',
-      innerHTML: JSON.stringify({
-        '@context': 'https://schema.org',
-        '@type': 'Product',
-        name: product.value!.name,
-        image: ogImage.value ? [ogImage.value] : undefined,
-        description: summary.value || undefined,
-        sku: product.value!.code || undefined,
-        brand: product.value!.brand ? { '@type': 'Brand', name: product.value!.brand.name } : undefined,
-        offers: {
-          '@type': 'Offer',
-          url: origin + route.path,
-          priceCurrency: 'UZS',
-          price: String(product.value!.priceUzs),
-          availability: product.value!.inStock ? 'https://schema.org/InStock' : 'https://schema.org/PreOrder',
-        },
-      }),
-    },
-    {
-      type: 'application/ld+json',
-      innerHTML: JSON.stringify({
-        '@context': 'https://schema.org',
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          { '@type': 'ListItem', position: 1, name: t('common.home'), item: origin + localePath('/') },
-          { '@type': 'ListItem', position: 2, name: t('common.catalog'), item: origin + localePath('/catalogs') },
-          { '@type': 'ListItem', position: 3, name: product.value!.name, item: origin + route.path },
-        ],
-      }),
-    },
+  meta: [
+    { property: 'product:price:amount', content: String(product.value!.priceUzs) },
+    { property: 'product:price:currency', content: 'UZS' },
   ],
 }))
+useJsonLd(() => [
+  {
+    '@type': 'Product',
+    name: product.value!.name,
+    url: origin + productPath.value,
+    image: product.value!.gallery.slice(0, 5).map(socialImage),
+    description: summary.value,
+    sku: product.value!.code || undefined,
+    brand: { '@type': 'Brand', name: product.value!.brand?.name ?? 'JeWell' },
+    offers: {
+      '@type': 'Offer',
+      url: origin + productPath.value,
+      priceCurrency: 'UZS',
+      price: String(product.value!.priceUzs),
+      itemCondition: 'https://schema.org/NewCondition',
+      availability: product.value!.inStock ? 'https://schema.org/InStock' : 'https://schema.org/PreOrder',
+      seller: { '@type': 'Organization', name: 'JeWell' },
+    },
+  },
+  breadcrumbList(origin, [
+    { name: t('common.home'), url: localePath('/') },
+    { name: t('common.catalog'), url: localePath('/catalogs') },
+    { name: product.value!.name, url: productPath.value },
+  ]),
+])
 </script>
 
 <template>

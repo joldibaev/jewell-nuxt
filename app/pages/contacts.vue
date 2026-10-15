@@ -1,7 +1,35 @@
 <script setup lang="ts">
 const { t, locale } = useI18n()
-useSeoMeta({ title: () => t('common.contacts') })
 const { data: s, error, refresh } = await useFetch('/api/site-settings', { query: { locale } })
+const localePath = useLocalePath()
+const socialImage = useSocialImage()
+const origin = useRequestURL().origin
+usePageSeo({
+  title: () => t('common.contacts'),
+  description: () => t('seo.contactsDescription'),
+  image: () => socialImage(s.value?.storePhotos[0]),
+})
+// Магазин с адресом и телефоном: данные для карточки организации в выдаче и на картах.
+useJsonLd(() => [
+  {
+    '@type': 'ContactPage',
+    name: t('common.contacts'),
+    url: origin + localePath('/contacts'),
+    inLanguage: locale.value,
+    mainEntity: {
+      '@type': 'JewelryStore',
+      '@id': origin + '/#organization',
+      name: 'JeWell',
+      url: origin + localePath('/'),
+      image: socialImage(s.value?.storePhotos[0]),
+      telephone: s.value?.phone || undefined,
+      email: s.value?.email || undefined,
+      address: s.value?.address ? { '@type': 'PostalAddress', streetAddress: s.value.address, addressCountry: 'UZ' } : undefined,
+      sameAs: socials.value.length ? socials.value.map(item => item.url) : undefined,
+    },
+  },
+  breadcrumbList(origin, [{ name: t('common.home'), url: localePath('/') }, { name: t('common.contacts'), url: localePath('/contacts') }]),
+])
 const telHref = computed(() => s.value?.phone ? 'tel:' + s.value.phone.replace(/[^\d+]/g, '') : undefined)
 const link = 'text-gold-dark hover:underline'
 const socials = computed(() => [
@@ -44,7 +72,7 @@ const socials = computed(() => [
     <PageSection v-if="s.storePhotos.length" :title="t('contacts.store')">
       <ul class="grid grid-cols-2 gap-4">
         <li v-for="(photo, i) in s.storePhotos" :key="photo.url" :class="{ 'col-span-2': i === 0 }">
-          <StrapiImage intrinsic :media="photo" :sizes="i === 0 ? 'xs:100vw xl:1200px' : 'xs:50vw xl:600px'" img-class="w-full rounded-xl" />
+          <StrapiImage intrinsic :media="photo" :alt="photo.alternativeText || t('contacts.storePhotoAlt', { n: i + 1 })" :sizes="i === 0 ? 'xs:100vw xl:1200px' : 'xs:50vw xl:600px'" img-class="w-full rounded-xl" />
         </li>
       </ul>
     </PageSection>

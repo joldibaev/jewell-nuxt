@@ -25,7 +25,10 @@
     "homeOgTitle": "JeWell — элегантные украшения",
     "catalogDescription": "Каталог ювелирных украшений JeWell: фильтры по типу, коллекции, камням, бренду и цене.",
     "notFound": "Страница не найдена",
-    "error": "Ошибка"
+    "error": "Ошибка",
+    "aboutDescription": "JeWell — магазин ювелирных изделий и аксессуаров: наша история, партнёры и подход к работе.",
+    "contactsDescription": "Контакты ювелирного магазина JeWell: адрес, телефон, режим работы, мессенджеры и форма заявки на консультацию.",
+    "productDescription": "{name} — украшение JeWell. Цена: {price} {currency}."
   },
   "header": {
     "logoLabel": "JeWell — на главную",
@@ -52,7 +55,8 @@
     "viewAll": "Посмотреть все",
     "banners": "Баннеры",
     "prevBanner": "Предыдущий баннер",
-    "nextBanner": "Следующий баннер"
+    "nextBanner": "Следующий баннер",
+    "bannerAlt": "Баннер JeWell {n}"
   },
   "collection": {
     "label": "Коллекция",
@@ -138,7 +142,8 @@
     "address": "Адрес",
     "store": "Наш магазин",
     "mapTitle": "Карта проезда",
-    "showMap": "Показать карту"
+    "showMap": "Показать карту",
+    "storePhotoAlt": "Магазин JeWell — фото {n}"
   },
   "form": {
     "title": "Быстрая консультация",
