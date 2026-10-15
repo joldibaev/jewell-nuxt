@@ -5,7 +5,7 @@ interface HomeDocument {
   categories: CatalogOption[]
   collections: CatalogOption[]
 }
-export default defineEventHandler(async (event): Promise<HomeResponse> => {
+export default defineCachedEventHandler(async (event): Promise<HomeResponse> => {
   const [home, bestsellers, inStock] = await Promise.all([
     strapiGet<HomeDocument | null>(event, 'home-page', {
       populate: {
@@ -32,4 +32,4 @@ export default defineEventHandler(async (event): Promise<HomeResponse> => {
     bestsellers: await publishedProductsByIds(event, (bestsellers.data?.products || []).map(product => product.documentId)),
     inStock: inStock.data.map(product => normalizeProduct(event, product)),
   }
-})
+}, apiCache)

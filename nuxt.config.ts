@@ -17,7 +17,9 @@ export default defineNuxtConfig({
     format: ['webp'],
     quality: 75,
     // Кеш на год: имя файла в Strapi содержит хеш, при замене картинки URL меняется.
-    ipx: { maxAge: 60 * 60 * 24 * 365 },
+    // Для оригиналов с http-домена IPX берёт max-age из ответа Strapi (или 300 с), поэтому его заголовок игнорируем.
+    // Серверный кеш готовых webp — server/middleware/ipx-cache.ts.
+    ipx: { maxAge: 60 * 60 * 24 * 365, http: { maxAge: 60 * 60 * 24 * 365, ignoreCacheControl: true } },
   },
   vite: {
     plugins: [tailwindcss()],

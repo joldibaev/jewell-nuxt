@@ -1,6 +1,6 @@
 import type { CatalogOption, CatalogOptions } from '../../shared/types/catalog'
 
-export default defineEventHandler(async (event): Promise<CatalogOptions> => {
+export default defineCachedEventHandler(async (event): Promise<CatalogOptions> => {
   async function options(path: string, withImage = false): Promise<CatalogOption[]> {
     const items: CatalogOption[] = []
     let page = 1
@@ -23,4 +23,4 @@ export default defineEventHandler(async (event): Promise<CatalogOptions> => {
     options('brands'), options('gems'), options('materials'),
   ])
   return { categories, collections, brands, gems, materials }
-})
+}, apiCache)

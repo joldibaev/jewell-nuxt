@@ -37,7 +37,7 @@ async function fetchCandidates(event: H3Event, product: RecommendationSource): P
   }
 }
 
-export default defineEventHandler(async (event): Promise<ProductDetail> => {
+export default defineCachedEventHandler(async (event): Promise<ProductDetail> => {
   const slug = getRouterParam(event, 'slug') ?? ''
   if (!/^[a-zA-Z0-9-]{1,200}$/.test(slug)) {
     throw createError({ statusCode: 404, statusMessage: 'Product not found' })
@@ -76,4 +76,4 @@ export default defineEventHandler(async (event): Promise<ProductDetail> => {
     ...normalizeProduct(event, product),
     related: related.map(item => normalizeProduct(event, toProductCard(item))),
   } as ProductDetail
-})
+}, apiCache)

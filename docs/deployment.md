@@ -17,6 +17,11 @@
 
 Слой зависимостей зависит только от `package.json`, `pnpm-lock.yaml` и `pnpm-workspace.yaml`; правки кода его не пересобирают. При смене зависимостей pnpm берёт пакеты из кэша `jewell-nuxt-pnpm`. Первый деплой на сервере всегда медленнее. Версию pnpm задаёт `ARG PNPM_VERSION`; лучше также добавить `packageManager` в `package.json`.
 
+## Кэш картинок и API
+
+- Готовые webp из `/_ipx` сохраняются на диск (`server/middleware/ipx-cache.ts`) и отдаются без sharp и без запроса в Strapi. Каталог задаёт `IPX_CACHE_DIR` (по умолчанию временная папка контейнера). Чтобы кэш переживал деплой, в Coolify смонтируйте persistent storage на этот путь, например `/app/ipx-cache`, и задайте `IPX_CACHE_DIR=/app/ipx-cache` (каталог должен быть доступен пользователю `node`). Заголовок `x-ipx-cache: HIT|MISS` показывает, откуда пришёл ответ. Старые записи сами не удаляются; при необходимости каталог можно очистить.
+- Ответы `/api/home`, `/api/catalog`, `/api/catalog-options`, `/api/site-settings`, `/api/about`, `/api/products/*` кэшируются в памяти на 60 с (`apiCache` в `server/utils/strapi.ts`): правки в Strapi появляются в течение минуты.
+
 ## Локальная проверка
 
 ```sh

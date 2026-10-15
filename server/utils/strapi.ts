@@ -86,3 +86,7 @@ export async function strapiCreateInquiry(event: H3Event, data: Record<string, u
     throw createError({ statusCode: 502, statusMessage: 'Не удалось отправить заявку. Попробуйте позже.' })
   }
 }
+
+// Кеш ответов API в памяти процесса: Strapi читается не на каждый заход. Правки редактора видны через ~минуту
+// (устаревший ответ отдаётся сразу, а обновление идёт в фоне). Ошибки не кешируются.
+export const apiCache = { maxAge: 60, staleMaxAge: 60 * 60, swr: true }
