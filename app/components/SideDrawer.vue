@@ -50,18 +50,14 @@ defineExpose({ open, close, isOpen })
 <style scoped>
 .drawer { visibility: hidden; transition: visibility 0.3s allow-discrete; }
 .drawer[open] { visibility: visible; }
-.drawer-panel, .drawer-scrim { transition: translate 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease; }
-.drawer-scrim { opacity: 0; }
-.drawer[data-side='right'] .drawer-panel { translate: 100% 0; }
-.drawer[data-side='left'] .drawer-panel { translate: -100% 0; }
-.drawer[open] .drawer-panel { translate: 0 0; }
-.drawer[open] .drawer-scrim { opacity: 1; }
-@starting-style {
-  .drawer[open] .drawer-scrim { opacity: 0; }
-  .drawer[open][data-side='right'] .drawer-panel { translate: 100% 0; }
-  .drawer[open][data-side='left'] .drawer-panel { translate: -100% 0; }
-}
+/* Открытие — @keyframes, а не @starting-style: он работает во всех мобильных браузерах и не даёт панели «прыгать». */
+.drawer[open] .drawer-panel { animation: drawer-in-right 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.drawer[open][data-side='left'] .drawer-panel { animation-name: drawer-in-left; }
+.drawer[open] .drawer-scrim { animation: drawer-fade 0.3s ease both; }
+@keyframes drawer-in-right { from { transform: translateX(100%); } to { transform: none; } }
+@keyframes drawer-in-left { from { transform: translateX(-100%); } to { transform: none; } }
+@keyframes drawer-fade { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
-  .drawer, .drawer-panel, .drawer-scrim { transition: none; }
+  .drawer, .drawer[open] .drawer-panel, .drawer[open] .drawer-scrim { animation: none; transition: none; }
 }
 </style>
