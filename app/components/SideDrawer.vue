@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Боковая панель на нативном <dialog>: фокус-ловушка, Esc и инертная страница из коробки.
-// Анимация — CSS (@starting-style), без таймеров. Закрывается Esc, кликом по фону или методом close().
+// Анимация — CSS, без таймеров. overflow-clip, а не hidden: hidden — прокручиваемый контейнер, и фокус на кнопке внутри ещё не заехавшей
+// панели прокручивал <dialog> вбок (панель мигала слева и «прыгала» вправо). У clip прокрутки нет. Закрывается Esc, кликом по фону или методом close().
 const props = withDefaults(defineProps<{ label: string; side?: 'left' | 'right' }>(), { side: 'right' })
 const emit = defineEmits<{ close: [] }>()
 
@@ -36,7 +37,7 @@ defineExpose({ open, close, isOpen })
     ref="dialog"
     :aria-label="props.label"
     :data-side="props.side"
-    class="drawer fixed inset-0 m-0 size-full max-h-none max-w-none overflow-hidden bg-transparent p-0 backdrop:bg-transparent"
+    class="drawer fixed inset-0 m-0 size-full max-h-none max-w-none overflow-clip bg-transparent p-0 backdrop:bg-transparent"
     @click="onBackdrop"
     @close="onClose"
   >
