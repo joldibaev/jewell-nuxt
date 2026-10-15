@@ -34,6 +34,9 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=build --chown=node:node /app/.output ./.output
+# Disk cache of /_ipx responses. A named volume mounted here inherits the owner of this directory.
+ENV IPX_CACHE_DIR=/app/ipx-cache
+RUN mkdir -p ${IPX_CACHE_DIR} && chown node:node ${IPX_CACHE_DIR}
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=10s --timeout=3s --start-period=20s --retries=6 \

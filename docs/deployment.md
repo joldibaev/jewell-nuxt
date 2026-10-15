@@ -19,7 +19,7 @@
 
 ## Кэш картинок и API
 
-- Готовые webp из `/_ipx` сохраняются на диск (`server/middleware/ipx-cache.ts`) и отдаются без sharp и без запроса в Strapi. Каталог задаёт `IPX_CACHE_DIR` (по умолчанию временная папка контейнера). Чтобы кэш переживал деплой, в Coolify смонтируйте persistent storage на этот путь, например `/app/ipx-cache`, и задайте `IPX_CACHE_DIR=/app/ipx-cache` (каталог должен быть доступен пользователю `node`). Заголовок `x-ipx-cache: HIT|MISS` показывает, откуда пришёл ответ. Старые записи сами не удаляются; при необходимости каталог можно очистить.
+- Готовые webp из `/_ipx` сохраняются на диск (`server/middleware/ipx-cache.ts`) и отдаются без sharp и без запроса в Strapi. Каталог `/app/ipx-cache` (`IPX_CACHE_DIR` задан в Dockerfile, принадлежит `node`). Чтобы кэш переживал деплой, в Coolify добавьте Persistent Storage (Volume Mount) с путём в контейнере `/app/ipx-cache`. Заголовок `x-ipx-cache: HIT|MISS` показывает, откуда пришёл ответ. Старые записи сами не удаляются; при необходимости каталог можно очистить.
 - Ответы `/api/home`, `/api/catalog`, `/api/catalog-options`, `/api/site-settings`, `/api/about`, `/api/products/*` кэшируются в памяти на 60 с (`apiCache` в `server/utils/strapi.ts`): правки в Strapi появляются в течение минуты.
 
 ## Локальная проверка
