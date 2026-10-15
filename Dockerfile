@@ -18,6 +18,7 @@ COPY nuxt.config.ts tsconfig.json ./
 COPY app ./app
 COPY server ./server
 COPY shared ./shared
+COPY i18n ./i18n
 COPY public ./public
 # nuxt.config.ts allows IPX to download originals only from this host, so the Strapi URL
 # is needed at build time. It is public; tokens are supplied by Coolify at runtime only.

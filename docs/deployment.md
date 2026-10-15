@@ -11,7 +11,7 @@
 3. Health check: включить, путь `/_health`, порт 3000. Маршрут не обращается к Strapi, поэтому недоступность CMS не откатывает деплой. Coolify игнорирует `HEALTHCHECK` из Dockerfile и проверяет через `curl` — он установлен в образе.
 4. Домен и HTTPS — в Coolify. Если Strapi на другом домене, `NUXT_STRAPI_URL` должен совпадать с хостом, с которого отдаются картинки.
 5. Кэш сборки включён; без причины не использовать Force deploy.
-6. Watch paths (если используются): `Dockerfile`, `.dockerignore`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `package.json`, `nuxt.config.ts`, `app/`, `server/`, `shared/`, `public/`.
+6. Watch paths (если используются): `Dockerfile`, `.dockerignore`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `package.json`, `nuxt.config.ts`, `app/`, `server/`, `shared/`, `i18n/`, `public/`.
 
 ## Кэш и скорость
 
