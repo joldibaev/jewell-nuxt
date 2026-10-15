@@ -30,14 +30,7 @@ const telHref = computed(() => settings.value?.phone ? 'tel:' + settings.value.p
         </address>
       </div>
 
-      <iframe
-        v-if="settings?.mapEmbedUrl"
-        title="Карта проезда"
-        :src="settings.mapEmbedUrl"
-        loading="lazy"
-        referrerpolicy="no-referrer-when-downgrade"
-        class="h-44 w-full rounded-xl border border-stone-200 md:col-span-2 xl:col-span-1"
-      />
+      <MapEmbed v-if="settings?.mapEmbedUrl" :src="settings.mapEmbedUrl" class="h-44 md:col-span-2 xl:col-span-1" />
     </div>
   </footer>
 </template>

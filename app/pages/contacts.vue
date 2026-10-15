@@ -35,14 +35,7 @@ const socials = computed(() => [
         <ContactBlock v-if="s.legalDetails" title="Реквизиты компании">{{ s.legalDetails }}</ContactBlock>
         <ContactBlock v-if="s.address" title="Адрес">{{ s.address }}</ContactBlock>
       </div>
-      <iframe
-        v-if="s.mapEmbedUrl"
-        title="Карта проезда"
-        :src="s.mapEmbedUrl"
-        loading="lazy"
-        referrerpolicy="no-referrer-when-downgrade"
-        class="h-72 w-full rounded-xl border border-stone-200 md:col-span-2 xl:col-span-1"
-      />
+      <MapEmbed v-if="s.mapEmbedUrl" :src="s.mapEmbedUrl" class="h-72 md:col-span-2 xl:col-span-1" />
     </section>
 
     <ConsultationForm class="mb-14" />
