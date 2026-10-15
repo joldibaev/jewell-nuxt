@@ -127,6 +127,17 @@ test('Nuxt server contract and SSR', async (t) => {
     assert.equal(bad.status, 404)
   })
 
+  await t.test('home reads the bestseller selection as draft and shows only published products', async () => {
+    const before = requests.length
+    const body = await (await fetch(base + '/api/home')).json()
+    const sent = requests.slice(before)
+    const selection = sent.find(url => url.pathname === '/api/bestseller')
+    assert.equal(selection.searchParams.get('status'), 'draft')
+    const cards = sent.find(url => url.pathname === '/api/products' && url.searchParams.get('filters[documentId][$in][0]') === 'product1')
+    assert.equal(cards.searchParams.get('status'), 'published')
+    assert.equal(body.bestsellers[0].name, 'Test ring')
+  })
+
   await t.test('favorites endpoint filters by documentId and validates input', async () => {
     const before = requests.length
     assert.deepEqual(await (await fetch(base + '/api/favorites')).json(), [])
