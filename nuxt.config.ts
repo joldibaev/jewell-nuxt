@@ -4,7 +4,9 @@ import tailwindcss from '@tailwindcss/vite'
 // Он нужен на этапе сборки, поэтому в Docker/Coolify NUXT_STRAPI_URL должна быть доступна во время build.
 const strapiUrl = process.env.NUXT_STRAPI_URL
 
-const pageCache = { maxAge: 60, staleMaxAge: 60 * 60, swr: true }
+// varies: кеш Nitro рендерит страницу «обезличенным» запросом без заголовков, и canonical/og:url/JSON-LD получали бы http://localhost.
+// Перечисленные заголовки передаются в рендер (и входят в ключ кеша), поэтому абсолютные адреса строятся от настоящего хоста сайта.
+const pageCache = { maxAge: 60, staleMaxAge: 60 * 60, swr: true, varies: ['host', 'x-forwarded-host', 'x-forwarded-proto'] }
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',

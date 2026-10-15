@@ -3,6 +3,8 @@ export default defineEventHandler((event) => {
   return [
     'User-agent: *',
     'Disallow: /favorites',
+    'Disallow: /en/favorites',
+    'Disallow: /uz/favorites',
     'Disallow: /api/',
     'Disallow: /_ipx/',
     `Sitemap: ${siteOrigin(event)}/sitemap.xml`,

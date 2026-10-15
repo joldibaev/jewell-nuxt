@@ -5,13 +5,28 @@ const origin = useRequestURL().origin
 const { locale, locales } = useI18n()
 const switchLocalePath = useSwitchLocalePath()
 // Язык документа и ссылки на версии страницы на других языках (hreflang) для поисковиков.
+// Адреса версий без query, как и canonical: фильтры каталога не должны попадать в hreflang.
+const withoutQuery = (path: string) => path.split('?')[0]
+const alternates = computed(() => locales.value.map(item => ({
+  code: item.code,
+  language: item.language ?? item.code,
+  href: origin + withoutQuery(switchLocalePath(item.code)),
+})))
+const canonical = computed(() => origin + route.path)
 useHead(() => ({
   htmlAttrs: { lang: locale.value },
   link: [
-    { rel: 'canonical', href: origin + route.path },
-    ...locales.value.map(item => ({ rel: 'alternate' as const, hreflang: item.code, href: origin + switchLocalePath(item.code) })),
+    { rel: 'canonical', href: canonical.value },
+    ...alternates.value.map(item => ({ rel: 'alternate' as const, hreflang: item.code, href: item.href })),
+    // Для тех, чей язык не совпал ни с одной версией, — основная версия.
+    { rel: 'alternate' as const, hreflang: 'x-default', href: alternates.value.find(item => item.code === DEFAULT_LOCALE)?.href ?? canonical.value },
   ],
 }))
+useSeoMeta({
+  ogUrl: canonical,
+  ogLocale: () => alternates.value.find(item => item.code === locale.value)?.language.replace('-', '_'),
+  ogLocaleAlternate: () => alternates.value.filter(item => item.code !== locale.value).map(item => item.language.replace('-', '_')),
+})
 </script>
 
 <template>

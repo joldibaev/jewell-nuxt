@@ -80,7 +80,7 @@ const drawerLink = 'block rounded-lg px-3 py-3 text-xl text-nav transition-color
             <li><NuxtLinkLocale to="/about-us" :class="drawerLink" active-class="!text-gold-dark">{{ t('common.about') }}</NuxtLinkLocale></li>
             <li><NuxtLinkLocale to="/contacts" :class="drawerLink" active-class="!text-gold-dark">{{ t('common.contacts') }}</NuxtLinkLocale></li>
           </ul>
-          <div class="mt-4 px-3"><LanguageSwitcher /></div>
+          <LanguageSwitcher variant="inline" class="mt-4 px-3" />
         </nav>
 
         <div v-if="settings?.phone || settings?.instagramUrl || settings?.telegramUrl" class="shrink-0 space-y-2 border-t border-stone-100 px-6 py-5 text-muted">

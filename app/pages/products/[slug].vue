@@ -26,9 +26,9 @@ const summary = computed(() => paragraphs.value.join(' ').slice(0, 160))
 
 useSeoMeta({
   title: () => product.value!.name,
-  description: summary,
+  description: () => summary.value || undefined,
   ogTitle: () => product.value!.name,
-  ogDescription: summary,
+  ogDescription: () => summary.value || undefined,
   ogImage,
   ogType: 'website',
   twitterCard: 'summary_large_image',

@@ -3,6 +3,7 @@ import type { CatalogSort } from '#shared/types/catalog'
 
 const { t } = useI18n()
 const localePath = useLocalePath()
+const origin = useRequestURL().origin
 useSeoMeta({ title: () => t('common.catalog'), description: () => t('seo.catalogDescription') })
 useHead(() => ({
   script: [{
@@ -11,8 +12,8 @@ useHead(() => ({
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: t('common.home'), item: localePath('/') },
-        { '@type': 'ListItem', position: 2, name: t('common.catalog'), item: localePath('/catalogs') },
+        { '@type': 'ListItem', position: 1, name: t('common.home'), item: origin + localePath('/') },
+        { '@type': 'ListItem', position: 2, name: t('common.catalog'), item: origin + localePath('/catalogs') },
       ],
     }),
   }],

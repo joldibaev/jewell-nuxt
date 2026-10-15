@@ -248,7 +248,7 @@ test('Nuxt server contract and SSR', async (t) => {
     assert.ok(en.includes('English heading'))
     assert.ok(en.includes('href="/en/catalogs"'))
     assert.ok(en.includes('hreflang="uz"'))
-    assert.ok(en.includes('English') && en.includes('Русский'), 'language select lists every language')
+    assert.ok(en.includes('English') && en.includes('Русский') && en.includes('href="/uz/about-us"'), 'language menu lists every language')
     const uz = await (await fetch(base + '/uz')).text()
     assert.match(uz, /<html[^>]*lang="uz"/)
     assert.ok(uz.includes('href="/uz/about-us"'))
@@ -265,5 +265,32 @@ test('Nuxt server contract and SSR', async (t) => {
     const xml = await (await fetch(base + '/sitemap.xml')).text()
     for (const path of ['/en', '/uz', '/en/catalogs', '/uz/products/test-ring']) assert.ok(xml.includes('<loc>' + base + path + '</loc>'), path)
     assert.ok(xml.includes('hreflang="uz" href="' + base + '/uz/about-us"'))
+  })
+
+  await t.test('SEO tags: canonical, hreflang (without query), x-default, og:locale', async () => {
+    const head = async (path) => {
+      const html = await (await fetch(base + path)).text()
+      return html.slice(html.indexOf('<head>'), html.indexOf('</head>'))
+    }
+    const catalog = await head('/en/catalogs?categories=ring')
+    assert.ok(catalog.includes('rel="canonical" href="' + base + '/en/catalogs"'), 'canonical has no query')
+    for (const [code, path] of [['ru', '/catalogs'], ['en', '/en/catalogs'], ['uz', '/uz/catalogs'], ['x-default', '/catalogs']]) {
+      assert.ok(catalog.includes('hreflang="' + code + '" href="' + base + path + '"'), 'hreflang ' + code)
+    }
+    assert.match(catalog, /property="og:locale" content="en_US"/)
+    assert.match(catalog, /property="og:locale:alternate" content="ru_RU"/)
+    assert.match(catalog, /property="og:url" content="[^"]*\/en\/catalogs"/)
+    assert.ok(catalog.includes('"item":"' + base + '/en"'), 'breadcrumbs are absolute and localized')
+    const productHead = await head('/uz/products/test-ring')
+    assert.ok(productHead.includes('rel="canonical" href="' + base + '/uz/products/test-ring"'))
+    assert.ok(!/<meta name="description" content>/.test(productHead), 'no empty description')
+    assert.match(productHead, /<title>Test ring — JeWell<\/title>/)
+    // Кешируемые страницы тоже строят адреса от реального хоста, а не от localhost.
+    for (const path of ['/about-us', '/contacts', '/en', '/uz/about-us']) {
+      assert.ok((await head(path)).includes('rel="canonical" href="' + base + path), 'canonical host on cached ' + path)
+    }
+    assert.ok(productHead.includes('"url":"' + base + '/uz/products/test-ring"'), 'JSON-LD offer url uses the real host')
+    const robots = await (await fetch(base + '/robots.txt')).text()
+    for (const path of ['/favorites', '/en/favorites', '/uz/favorites']) assert.ok(robots.includes('Disallow: ' + path), path)
   })
 })
