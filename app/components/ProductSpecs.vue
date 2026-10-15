@@ -3,18 +3,19 @@ import type { ProductDetail } from '#shared/types/catalog'
 
 // Характеристики товара: показываем только те, что заполнены в Strapi.
 const props = defineProps<{ product: ProductDetail }>()
+const { t } = useI18n()
 
 const rows = computed(() => {
   const p = props.product
   const list: { label: string; value: string }[] = []
-  if (p.collection) list.push({ label: 'Коллекция', value: p.collection.name })
-  if (p.materials.length) list.push({ label: 'Материал', value: p.materials.map(m => m.name).join(', ') })
-  if (p.weight) list.push({ label: 'Вес', value: `${p.weight} г` })
+  if (p.collection) list.push({ label: t('product.collection'), value: p.collection.name })
+  if (p.materials.length) list.push({ label: t('product.material'), value: p.materials.map(m => m.name).join(', ') })
+  if (p.weight) list.push({ label: t('product.weight'), value: `${p.weight} ${t('common.grams')}` })
   if (p.lengthMin || p.lengthMax) {
-    list.push({ label: 'Длина', value: p.lengthMin && p.lengthMax && p.lengthMin !== p.lengthMax ? `${p.lengthMin}–${p.lengthMax} см` : `${p.lengthMax || p.lengthMin} см` })
+    list.push({ label: t('product.length'), value: p.lengthMin && p.lengthMax && p.lengthMin !== p.lengthMax ? `${p.lengthMin}–${p.lengthMax} ${t('common.cm')}` : `${p.lengthMax || p.lengthMin} ${t('common.cm')}` })
   }
-  for (const item of p.gems) if (item.gem) list.push({ label: item.gem.name, value: `${item.count} шт.` })
-  if (p.code) list.push({ label: 'Артикул', value: p.code })
+  for (const item of p.gems) if (item.gem) list.push({ label: item.gem.name, value: `${item.count} ${t('common.pieces')}` })
+  if (p.code) list.push({ label: t('product.code'), value: p.code })
   return list
 })
 </script>

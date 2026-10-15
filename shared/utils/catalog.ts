@@ -1,4 +1,5 @@
 import type { CatalogFilters, Media } from '../types/catalog'
+import { DEFAULT_LOCALE, NUMBER_LOCALES, type Locale } from './locale'
 
 export function emptyCatalogFilters(): CatalogFilters {
   return {
@@ -22,8 +23,8 @@ export function catalogQuery(filters: CatalogFilters): Record<string, string | s
   return query
 }
 
-export function formatPrice(value: string | number): string {
-  return new Intl.NumberFormat('ru-RU').format(Number(value))
+export function formatPrice(value: string | number, locale: Locale = DEFAULT_LOCALE): string {
+  return new Intl.NumberFormat(NUMBER_LOCALES[locale]).format(Number(value))
 }
 
 // Мягкий разбор URL для интерфейса: неизвестное или битое значение превращается в значение по умолчанию.

@@ -1,6 +1,7 @@
 import type { CatalogOption, CatalogOptions } from '../../shared/types/catalog'
 
 export default defineCachedEventHandler(async (event): Promise<CatalogOptions> => {
+  const locale = requestLocale(event)
   async function options(path: string, withImage = false): Promise<CatalogOption[]> {
     const items: CatalogOption[] = []
     let page = 1
@@ -16,6 +17,10 @@ export default defineCachedEventHandler(async (event): Promise<CatalogOptions> =
       pageCount = response.meta.pagination?.pageCount || 1
       page++
     } while (page <= pageCount)
+    if (locale !== DEFAULT_LOCALE) {
+      await translateNames(event, path, locale, items)
+      items.sort((a, b) => a.name.localeCompare(b.name, locale))
+    }
     return items
   }
   const [categories, collections, brands, gems, materials] = await Promise.all([

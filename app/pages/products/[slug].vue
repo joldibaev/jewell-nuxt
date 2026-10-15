@@ -2,13 +2,15 @@
 import { formatPrice } from '#shared/utils/catalog'
 
 const route = useRoute()
-const { data: product, error } = await useFetch(() => `/api/products/${route.params.slug}`)
-const { data: settings } = await useFetch('/api/site-settings')
+const { t, locale } = useI18n()
+const localePath = useLocalePath()
+const { data: product, error } = await useFetch(() => `/api/products/${route.params.slug}`, { query: { locale } })
+const { data: settings } = await useFetch('/api/site-settings', { query: { locale } })
 
 if (error.value || !product.value) {
   throw createError({
     statusCode: error.value?.statusCode === 404 || !product.value ? 404 : 502,
-    statusMessage: 'Товар не найден',
+    statusMessage: t('product.notFound'),
     fatal: true,
   })
 }
@@ -58,8 +60,8 @@ useHead(() => ({
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Главная', item: origin + '/' },
-          { '@type': 'ListItem', position: 2, name: 'Каталог', item: origin + '/catalogs' },
+          { '@type': 'ListItem', position: 1, name: t('common.home'), item: origin + localePath('/') },
+          { '@type': 'ListItem', position: 2, name: t('common.catalog'), item: origin + localePath('/catalogs') },
           { '@type': 'ListItem', position: 3, name: product.value!.name, item: origin + route.path },
         ],
       }),
@@ -70,11 +72,11 @@ useHead(() => ({
 
 <template>
   <article v-if="product">
-    <nav aria-label="Хлебные крошки" class="mb-6 text-sm text-muted">
+    <nav :aria-label="t('common.breadcrumbs')" class="mb-6 text-sm text-muted">
       <ol class="flex flex-wrap gap-2">
-        <li><NuxtLink to="/" class="hover:text-gold-dark">Главная</NuxtLink></li>
+        <li><NuxtLinkLocale to="/" class="hover:text-gold-dark">{{ t('common.home') }}</NuxtLinkLocale></li>
         <li aria-hidden="true">/</li>
-        <li><NuxtLink to="/catalogs" class="hover:text-gold-dark">Каталог</NuxtLink></li>
+        <li><NuxtLinkLocale to="/catalogs" class="hover:text-gold-dark">{{ t('common.catalog') }}</NuxtLinkLocale></li>
         <li aria-hidden="true">/</li>
         <li aria-current="page">{{ product.name }}</li>
       </ol>
@@ -93,8 +95,8 @@ useHead(() => ({
 
         <ProductSpecs :product="product" class="mb-6" />
 
-        <p class="mb-1 text-3xl text-gold">{{ formatPrice(product.priceUzs) }} сум</p>
-        <p v-if="product.inStock" class="mb-6 text-gold-dark">В наличии</p>
+        <p class="mb-1 text-3xl text-gold">{{ formatPrice(product.priceUzs, locale) }} {{ t('common.currency') }}</p>
+        <p v-if="product.inStock" class="mb-6 text-gold-dark">{{ t('product.inStock') }}</p>
 
         <ul v-if="noteLines.length" class="mb-6 space-y-1 text-ink">
           <li v-for="(line, i) in noteLines" :key="i">{{ line }}</li>
@@ -104,7 +106,7 @@ useHead(() => ({
       </div>
     </div>
 
-    <PageSection v-if="product.related.length" title="Возможно, вам понравится">
+    <PageSection v-if="product.related.length" :title="t('product.like')">
       <ProductGrid :products="product.related" :columns="4" />
     </PageSection>
   </article>

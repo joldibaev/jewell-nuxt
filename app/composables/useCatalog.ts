@@ -6,11 +6,14 @@ import { catalogQuery, filtersFromQuery } from '#shared/utils/catalog'
 export async function useCatalog() {
   const route = useRoute()
   const router = useRouter()
+  const localePath = useLocalePath()
+  const { locale } = useI18n()
 
   const filters = computed(() => filtersFromQuery(route.query))
+  // Фильтры без номера страницы + язык: у каждого языка своя выдача.
   const query = computed(() => {
     const { page: _page, ...rest } = route.query
-    return rest
+    return { ...rest, locale: locale.value }
   })
 
   // useState до первого await: после него в обычной функции теряется контекст Nuxt.
@@ -18,7 +21,7 @@ export async function useCatalog() {
 
   // Ждём оба запроса: первая страница товаров и варианты фильтров должны попасть в серверный HTML.
   const [options, first] = await Promise.all([
-    useFetch('/api/catalog-options'),
+    useFetch('/api/catalog-options', { query: { locale } }),
     useFetch<CatalogResponse>('/api/catalog', { query }),
   ])
 
@@ -75,10 +78,10 @@ export async function useCatalog() {
   }
 
   function applyFilters(next: CatalogFilters) {
-    return router.push({ path: '/catalogs', query: catalogQuery({ ...next, page: 1 }) })
+    return router.push({ path: localePath('/catalogs'), query: catalogQuery({ ...next, page: 1 }) })
   }
   function resetFilters() {
-    return router.push({ path: '/catalogs' })
+    return router.push({ path: localePath('/catalogs') })
   }
 
   return {

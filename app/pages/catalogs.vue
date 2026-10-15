@@ -1,20 +1,22 @@
 <script setup lang="ts">
 import type { CatalogSort } from '#shared/types/catalog'
 
-useSeoMeta({ title: 'Каталог', description: 'Каталог ювелирных украшений JeWell: фильтры по типу, коллекции, камням, бренду и цене.' })
-useHead({
+const { t } = useI18n()
+const localePath = useLocalePath()
+useSeoMeta({ title: () => t('common.catalog'), description: () => t('seo.catalogDescription') })
+useHead(() => ({
   script: [{
     type: 'application/ld+json',
     innerHTML: JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Главная', item: '/' },
-        { '@type': 'ListItem', position: 2, name: 'Каталог', item: '/catalogs' },
+        { '@type': 'ListItem', position: 1, name: t('common.home'), item: localePath('/') },
+        { '@type': 'ListItem', position: 2, name: t('common.catalog'), item: localePath('/catalogs') },
       ],
     }),
   }],
-})
+}))
 
 const {
   filters, options, items, pagination, hasMore, loadMore, loadingMore, loadMoreError,
@@ -31,38 +33,38 @@ const refreshing = computed(() => status.value === 'pending' && items.value.leng
 
 <template>
   <div>
-    <nav aria-label="Хлебные крошки" class="mb-4 text-sm text-muted">
+    <nav :aria-label="t('common.breadcrumbs')" class="mb-4 text-sm text-muted">
       <ol class="flex gap-2">
-        <li><NuxtLink to="/" class="hover:text-gold-dark">Главная</NuxtLink></li>
+        <li><NuxtLinkLocale to="/" class="hover:text-gold-dark">{{ t('common.home') }}</NuxtLinkLocale></li>
         <li aria-hidden="true">/</li>
-        <li aria-current="page">Каталог</li>
+        <li aria-current="page">{{ t('common.catalog') }}</li>
       </ol>
     </nav>
 
-    <h1 class="mb-6 text-4xl">Каталог</h1>
+    <h1 class="mb-6 text-4xl">{{ t('common.catalog') }}</h1>
 
     <div class="grid gap-8 lg:grid-cols-[16rem_minmax(0,1fr)] xl:grid-cols-[18rem_minmax(0,1fr)]">
       <aside class="hidden lg:block">
         <div class="sticky top-24 max-h-[calc(100dvh-7rem)] overflow-y-auto pr-3 [scrollbar-color:var(--color-stone-300)_transparent] [scrollbar-width:thin]">
-          <p v-if="options.error.value" role="alert" class="mb-4 text-sm text-red-700">Не удалось загрузить варианты фильтров.</p>
+          <p v-if="options.error.value" role="alert" class="mb-4 text-sm text-red-700">{{ t('catalog.optionsError') }}</p>
           <CatalogFilters :options="options.data.value" @apply="applyFilters" @reset="resetFilters()" />
         </div>
       </aside>
 
-      <section aria-label="Товары">
+      <section :aria-label="t('catalog.products')">
         <CatalogToolbar v-model:sort="sort" :total="pagination?.total" @open-filters="filterDrawer?.open()" />
 
         <StatusMessage v-if="error && !items.length" kind="error">
-          {{ error.statusCode === 400 ? 'Проверьте параметры фильтров в адресе страницы.' : 'Не удалось загрузить каталог.' }}
+          {{ error.statusCode === 400 ? t('catalog.badFilters') : t('catalog.loadError') }}
           <template #actions>
-            <button type="button" class="btn" @click="refresh()">Повторить</button>
-            <button v-if="error.statusCode === 400" type="button" class="btn" @click="resetFilters()">Сбросить фильтры</button>
+            <button type="button" class="btn" @click="refresh()">{{ t('common.retry') }}</button>
+            <button v-if="error.statusCode === 400" type="button" class="btn" @click="resetFilters()">{{ t('catalog.resetFilters') }}</button>
           </template>
         </StatusMessage>
         <StatusMessage v-else-if="status === 'pending' && !items.length" kind="loading" />
         <StatusMessage v-else-if="!items.length" kind="empty">
-          По вашему запросу ничего не найдено.
-          <template #actions><button type="button" class="btn" @click="resetFilters()">Сбросить фильтры</button></template>
+          {{ t('catalog.empty') }}
+          <template #actions><button type="button" class="btn" @click="resetFilters()">{{ t('catalog.resetFilters') }}</button></template>
         </StatusMessage>
 
         <template v-else>
@@ -80,15 +82,15 @@ const refreshing = computed(() => status.value === 'pending' && items.value.leng
     </div>
 
     <!-- Фильтры на телефоне: та же форма в боковой панели; содержимое создаётся при первом открытии. -->
-    <SideDrawer ref="filterDrawer" label="Фильтры" side="left" class="lg:hidden">
+    <SideDrawer ref="filterDrawer" :label="t('catalog.filters')" side="left" class="lg:hidden">
       <template #default="{ close }">
-        <DrawerHeader close-label="Закрыть фильтры" @close="close"><h2 class="text-2xl">Фильтры</h2></DrawerHeader>
+        <DrawerHeader :close-label="t('catalog.closeFilters')" @close="close"><h2 class="text-2xl">{{ t('catalog.filters') }}</h2></DrawerHeader>
         <div class="flex-1 overflow-y-auto overscroll-contain px-4 py-4">
           <CatalogFilters :options="options.data.value" @apply="applyFilters" @reset="resetFilters()" />
         </div>
         <div class="shrink-0 border-t border-stone-100 p-4">
           <button type="button" class="btn w-full" @click="close">
-            {{ pagination ? `Показать товары (${pagination.total})` : 'Показать товары' }}
+            {{ pagination ? t('catalog.showProductsCount', { count: pagination.total }) : t('catalog.showProducts') }}
           </button>
         </div>
       </template>

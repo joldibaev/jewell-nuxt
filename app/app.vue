@@ -2,11 +2,16 @@
 // canonical без query-параметров: фильтры и сортировка каталога не плодят дубли в поиске.
 const route = useRoute()
 const origin = useRequestURL().origin
-useHead({
+const { locale, locales } = useI18n()
+const switchLocalePath = useSwitchLocalePath()
+// Язык документа и ссылки на версии страницы на других языках (hreflang) для поисковиков.
+useHead(() => ({
+  htmlAttrs: { lang: locale.value },
   link: [
-    { rel: 'canonical', href: () => origin + route.path },
+    { rel: 'canonical', href: origin + route.path },
+    ...locales.value.map(item => ({ rel: 'alternate' as const, hreflang: item.code, href: origin + switchLocalePath(item.code) })),
   ],
-})
+}))
 </script>
 
 <template>

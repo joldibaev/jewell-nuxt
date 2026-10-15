@@ -38,6 +38,7 @@ async function fetchCandidates(event: H3Event, product: RecommendationSource): P
 }
 
 export default defineCachedEventHandler(async (event): Promise<ProductDetail> => {
+  const locale = requestLocale(event)
   const slug = getRouterParam(event, 'slug') ?? ''
   if (!/^[a-zA-Z0-9-]{1,200}$/.test(slug)) {
     throw createError({ statusCode: 404, statusMessage: 'Product not found' })
@@ -72,8 +73,17 @@ export default defineCachedEventHandler(async (event): Promise<ProductDetail> =>
   const candidates = await fetchCandidates(event, product)
   // Сначала товары из поля «Рекомендуемые товары» в заданном порядке, затем автоподбор по сходству до 8 штук.
   const related = pickRecommendations(product, manual ?? [], candidates)
-  return {
+  const detail = {
     ...normalizeProduct(event, product),
     related: related.map(item => normalizeProduct(event, toProductCard(item))),
   } as ProductDetail
+  // Переводятся текст товара, его рекомендации и названия связанных справочников (категории, коллекция, материалы, камни).
+  await Promise.all([
+    translateProducts(event, locale, [detail, ...detail.related]),
+    translateNames(event, 'categories', locale, detail.categories),
+    translateNames(event, 'collections', locale, [detail.collection]),
+    translateNames(event, 'materials', locale, detail.materials),
+    translateNames(event, 'gems', locale, detail.gems.map(item => item.gem)),
+  ])
+  return detail
 }, apiCache)

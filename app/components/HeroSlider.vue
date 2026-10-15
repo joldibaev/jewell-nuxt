@@ -5,6 +5,7 @@ import { Swiper, SwiperSlide } from 'swiper/vue'
 
 defineProps<{ banners: Media[] }>()
 const modules = [Navigation, Pagination, Autoplay, A11y]
+const { t } = useI18n()
 </script>
 
 <template>
@@ -15,8 +16,8 @@ const modules = [Navigation, Pagination, Autoplay, A11y]
     :autoplay="{ delay: 5000, pauseOnMouseEnter: true, disableOnInteraction: false }"
     navigation
     :pagination="{ clickable: true }"
-    :a11y="{ prevSlideMessage: 'Предыдущий баннер', nextSlideMessage: 'Следующий баннер' }"
-    aria-label="Баннеры"
+    :a11y="{ prevSlideMessage: t('home.prevBanner'), nextSlideMessage: t('home.nextBanner') }"
+    :aria-label="t('home.banners')"
   >
     <SwiperSlide v-for="(banner, i) in banners" :key="banner.url">
       <!-- Только первый баннер влияет на LCP: он грузится с высоким приоритетом, остальные лениво. -->

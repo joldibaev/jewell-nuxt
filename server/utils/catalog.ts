@@ -1,10 +1,12 @@
+import type { H3Event } from 'h3'
 import type { CatalogFilters } from '../../shared/types/catalog'
 import { emptyCatalogFilters } from '../../shared/utils/catalog'
-import type { StrapiQuery } from './strapi'
+import { DEFAULT_LOCALE, type Locale } from '../../shared/utils/locale'
+import { strapiGet, type StrapiQuery } from './strapi'
 
 export function parseCatalogQuery(query: Record<string, unknown>): CatalogFilters {
   const result = emptyCatalogFilters()
-  const allowed = new Set([...Object.keys(result), 'minPrice', 'maxPrice'])
+  const allowed = new Set([...Object.keys(result), 'minPrice', 'maxPrice', 'locale'])
   const invalid = (message: string): never => {
     throw createError({ statusCode: 400, statusMessage: message })
   }
@@ -51,7 +53,24 @@ export function parseCatalogQuery(query: Record<string, unknown>): CatalogFilter
   return result
 }
 
-export function buildCatalogQuery(input: CatalogFilters): StrapiQuery {
+// Поиск на en/uz: название и описание в каталоге русские, поэтому дополнительно ищем по переводам
+// и добавляем найденные товары к условию поиска.
+export async function translatedSearchIds(event: H3Event, locale: Locale, search: string): Promise<string[]> {
+  if (locale === DEFAULT_LOCALE || !search) return []
+  try {
+    const response = await strapiGet<{ documentId: string }[]>(event, 'products', {
+      locale, status: 'published', fields: ['name'],
+      filters: { $or: [{ name: { $containsi: search } }, { description: { $containsi: search } }] },
+      pagination: { page: 1, pageSize: 100 },
+    })
+    return response.data.map(item => item.documentId)
+  } catch (error) {
+    console.error('[i18n] translated search is unavailable', (error as { statusCode?: number }).statusCode)
+    return []
+  }
+}
+
+export function buildCatalogQuery(input: CatalogFilters, translatedMatches: string[] = []): StrapiQuery {
   const filters: StrapiQuery = {}
   for (const [key, relation] of [['categories', 'categories'], ['collections', 'collection'], ['brands', 'brand'], ['materials', 'materials']] as const) {
     if (input[key].length) filters[relation] = { documentId: { $in: input[key] } }
@@ -64,6 +83,7 @@ export function buildCatalogQuery(input: CatalogFilters): StrapiQuery {
   if (input.search) filters.$or = [
     { name: { $containsi: input.search } },
     { description: { $containsi: input.search } },
+    ...(translatedMatches.length ? [{ documentId: { $in: translatedMatches } }] : []),
   ]
   const sort = input.sort === 'price-asc'
     ? ['priceUzs:asc', 'id:asc']

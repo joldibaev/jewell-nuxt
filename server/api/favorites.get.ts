@@ -11,5 +11,5 @@ export default defineEventHandler(async (event): Promise<ProductCard[]> => {
   }
   if (!ids.length) return []
 
-  return publishedProductsByIds(event, ids)
+  return publishedProductsByIds(event, ids, requestLocale(event))
 })

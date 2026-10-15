@@ -7,6 +7,7 @@ import type { Media, PreviewPosition } from '#shared/types/catalog'
 const props = defineProps<{ images: Media[]; position: PreviewPosition | null; to?: string; sizes: string }>()
 
 const NuxtLink = resolveComponent('NuxtLink')
+const { t } = useI18n()
 const scroller = useTemplateRef<HTMLElement>('scroller')
 const activated = ref(false)
 const current = ref(0)
@@ -43,8 +44,8 @@ function onScroll() {
       </div>
     </component>
     <template v-if="canScroll">
-      <button type="button" aria-label="Предыдущее фото" :disabled="current === 0" :class="[arrow, 'left-0']" @click.prevent.stop="step(-1)"><svg class="size-5 rotate-180" viewBox="0 0 8 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m1.5 1 5 5-5 5" /></svg></button>
-      <button type="button" aria-label="Следующее фото" :disabled="current === images.length - 1" :class="[arrow, 'right-0']" @click.prevent.stop="step(1)"><svg class="size-5" viewBox="0 0 8 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m1.5 1 5 5-5 5" /></svg></button>
+      <button type="button" :aria-label="t('product.prevPhoto')" :disabled="current === 0" :class="[arrow, 'left-0']" @click.prevent.stop="step(-1)"><svg class="size-5 rotate-180" viewBox="0 0 8 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m1.5 1 5 5-5 5" /></svg></button>
+      <button type="button" :aria-label="t('product.nextPhoto')" :disabled="current === images.length - 1" :class="[arrow, 'right-0']" @click.prevent.stop="step(1)"><svg class="size-5" viewBox="0 0 8 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m1.5 1 5 5-5 5" /></svg></button>
     </template>
     <ol v-if="canScroll" class="pointer-events-none absolute inset-x-0 bottom-2 z-20 flex justify-center gap-1.5" aria-hidden="true">
       <li v-for="(image, i) in images" :key="image.url" class="size-1.5 rounded-full bg-white/70 shadow-sm transition-colors" :class="{ 'bg-gold!': i === current }" />

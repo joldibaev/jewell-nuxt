@@ -9,7 +9,20 @@ const pageCache = { maxAge: 60, staleMaxAge: 60 * 60, swr: true }
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  modules: ['@nuxt/image'],
+  modules: ['@nuxt/image', '@nuxtjs/i18n'],
+  // Русский — язык по умолчанию без префикса в адресе (/catalogs), остальные с префиксом (/en/catalogs, /uz/catalogs).
+  // Язык по браузеру не определяем: адрес однозначно задаёт язык, и страницы можно кешировать по URL.
+  // SEO-теги (lang, hreflang, canonical) расставляет app/app.vue.
+  i18n: {
+    strategy: 'prefix_except_default',
+    defaultLocale: 'ru',
+    detectBrowserLanguage: false,
+    locales: [
+      { code: 'ru', language: 'ru-RU', name: 'Русский', file: 'ru.json' },
+      { code: 'en', language: 'en-US', name: 'English', file: 'en.json' },
+      { code: 'uz', language: 'uz-UZ', name: 'O‘zbekcha', file: 'uz.json' },
+    ],
+  },
   css: ['~/assets/css/main.css'],
   image: {
     // Без NUXT_STRAPI_URL домен не разрешён и картинки не загрузятся: это видимая ошибка, а не подмена адреса.
@@ -38,10 +51,12 @@ export default defineNuxtConfig({
     // HTML публичных страниц считается раз в минуту, дальше отдаётся из кеша (устаревший ответ обновляется в фоне).
     // Каталог не включён: его ключ зависит от фильтров, а данные и так кешируются в /api/catalog.
     // Query у этих страниц убирает server/middleware/strip-query.ts, иначе каждый ?utm=… получил бы свою запись.
-    '/': { cache: pageCache },
-    '/about-us': { cache: pageCache },
-    '/contacts': { cache: pageCache },
-    '/products/**': { cache: pageCache },
+    ...Object.fromEntries(['', '/en', '/uz'].flatMap(prefix => [
+      [prefix || '/', { cache: pageCache }],
+      [`${prefix}/about-us`, { cache: pageCache }],
+      [`${prefix}/contacts`, { cache: pageCache }],
+      [`${prefix}/products/**`, { cache: pageCache }],
+    ])),
     // Файлы из public без хеша в имени: месяц кеша, при замене картинки меняйте имя файла.
     '/img/**': { headers: { 'cache-control': 'public, max-age=2592000' } },
     '/favicon/**': { headers: { 'cache-control': 'public, max-age=2592000' } },
@@ -56,7 +71,6 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      htmlAttrs: { lang: 'ru' },
       titleTemplate: '%s — JeWell',
       link: [
         { rel: 'icon', href: '/favicon.ico', sizes: 'any' },

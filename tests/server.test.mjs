@@ -9,7 +9,7 @@ test('Nuxt server contract and SSR', async (t) => {
   const requests = []
   const token = 'integration-test-private-token'
   const product = {
-    documentId: 'product1', name: 'Test ring', slug: 'test-ring',
+    documentId: 'product1', name: 'Test ring', slug: 'test-ring', description: null,
     priceUzs: '2500000', inStock: true, previewPosition: 'По центру',
     gallery: [{ url: '/uploads/ring.jpg', alternativeText: null }],
     categories: [{ documentId: 'rings', name: 'Rings' }],
@@ -21,7 +21,19 @@ test('Nuxt server contract and SSR', async (t) => {
     const page = Number(url.searchParams.get('pagination[page]') || 1)
     let data
     let pagination
-    if (url.pathname === '/api/products') {
+    // Запросы переводов (locale=en): отдельные записи с тем же documentId и переведёнными полями.
+    const english = url.searchParams.get('locale') === 'en'
+    if (english && url.pathname === '/api/products') {
+      data = [{ documentId: 'product1', name: 'English ring', description: 'English description' }]
+      pagination = { page, pageSize: 100, pageCount: 1, total: 1 }
+    } else if (english && url.pathname === '/api/about-page') {
+      data = { heading: 'English heading', text: null, partners: [{ name: 'English partner', description: 'Partner text' }] }
+    } else if (english && url.pathname === '/api/site-setting') {
+      data = { address: 'English address', workingHours: null }
+    } else if (english) {
+      data = [{ documentId: 'option1', name: 'English option' }, { documentId: 'rings', name: 'English option' }]
+      pagination = { page, pageSize: 100, pageCount: 1, total: 2 }
+    } else if (url.pathname === '/api/products') {
       data = [product]
       pagination = { page, pageSize: 20, pageCount: 2, total: 21 }
     } else if (url.pathname === '/api/home-page') {
@@ -185,5 +197,73 @@ test('Nuxt server contract and SSR', async (t) => {
       if (path.startsWith('/catalogs')) assert.ok(html.includes('Test ring'))
       if (path === '/contacts') assert.ok(html.includes('+998123456789'))
     }
+  })
+
+  await t.test('translations are overlaid on the Russian data, the structure stays Russian', async () => {
+    const catalog = await (await fetch(base + '/api/catalog?locale=en')).json()
+    assert.equal(catalog.products[0].name, 'English ring')
+    assert.equal(catalog.products[0].priceUzs, '2500000')
+    const translation = requests.at(-1).searchParams
+    assert.equal(translation.get('locale'), 'en')
+    assert.equal(translation.get('filters[documentId][$in][0]'), 'product1')
+    assert.equal(translation.get('status'), 'published')
+
+    const before = requests.length
+    for (const locale of ['ru', 'zz']) {
+      const body = await (await fetch(base + '/api/catalog?locale=' + locale)).json()
+      assert.equal(body.products[0].name, 'Test ring', locale)
+    }
+    assert.ok(requests.slice(before).every(url => !url.searchParams.has('locale')), 'Russian and unknown locales do not ask for translations')
+
+    const product1 = await (await fetch(base + '/api/products/test-ring?locale=en')).json()
+    assert.equal(product1.name, 'English ring')
+    assert.equal(product1.description, 'English description')
+    assert.equal(product1.categories[0].name, 'English option')
+    const home = await (await fetch(base + '/api/home?locale=en')).json()
+    assert.equal(home.bestsellers[0].name, 'English ring')
+    const options = await (await fetch(base + '/api/catalog-options?locale=en')).json()
+    assert.equal(options.categories[0].name, 'English option')
+    const about = await (await fetch(base + '/api/about?locale=en')).json()
+    assert.equal(about.heading, 'English heading')
+    assert.equal(about.partners[0].name, 'English partner')
+    assert.equal(about.partners[0].image.url, upstreamUrl + '/uploads/p.png')
+    const settings = await (await fetch(base + '/api/site-settings?locale=en')).json()
+    assert.equal(settings.address, 'English address')
+    assert.equal(settings.phone, '+998123456789')
+  })
+
+  await t.test('search on another language also looks into translations', async () => {
+    const before = requests.length
+    await fetch(base + '/api/catalog?locale=en&search=ring&page=3')
+    const sent = requests.slice(before)
+    const translated = sent.find(url => url.searchParams.get('locale') === 'en' && url.searchParams.get('filters[$or][0][name][$containsi]') === 'ring')
+    assert.ok(translated)
+    const main = sent.find(url => !url.searchParams.has('locale') && url.searchParams.get('filters[$or][2][documentId][$in][0]') === 'product1')
+    assert.ok(main)
+  })
+
+  await t.test('localized pages render under their prefix with lang and links', async () => {
+    const en = await (await fetch(base + '/en/about-us')).text()
+    assert.match(en, /<html[^>]*lang="en"/)
+    assert.ok(en.includes('English heading'))
+    assert.ok(en.includes('href="/en/catalogs"'))
+    assert.ok(en.includes('hreflang="uz"'))
+    assert.ok(en.includes('English') && en.includes('Русский'), 'language select lists every language')
+    const uz = await (await fetch(base + '/uz')).text()
+    assert.match(uz, /<html[^>]*lang="uz"/)
+    assert.ok(uz.includes('href="/uz/about-us"'))
+    const ru = await (await fetch(base + '/about-us')).text()
+    assert.match(ru, /<html[^>]*lang="ru"/)
+    const notFound = await fetch(base + '/en/no-such-page', { headers: { accept: 'text/html' } })
+    assert.equal(notFound.status, 404)
+    assert.match(await notFound.text(), /Page not found/)
+    // Query на публичных страницах другого языка тоже отбрасывается кешем.
+    assert.equal((await fetch(base + '/en/contacts?x=1')).status, 200)
+  })
+
+  await t.test('sitemap has every language with alternates', async () => {
+    const xml = await (await fetch(base + '/sitemap.xml')).text()
+    for (const path of ['/en', '/uz', '/en/catalogs', '/uz/products/test-ring']) assert.ok(xml.includes('<loc>' + base + path + '</loc>'), path)
+    assert.ok(xml.includes('hreflang="uz" href="' + base + '/uz/about-us"'))
   })
 })

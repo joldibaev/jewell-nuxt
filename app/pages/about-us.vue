@@ -1,14 +1,15 @@
 <script setup lang="ts">
-const { data, error, refresh } = await useFetch('/api/about')
-useSeoMeta({ title: 'О нас', description: () => data.value?.heading ?? undefined })
+const { t, locale } = useI18n()
+const { data, error, refresh } = await useFetch('/api/about', { query: { locale } })
+useSeoMeta({ title: () => t('common.about'), description: () => data.value?.heading ?? undefined })
 </script>
 
 <template>
-  <h1 class="section-title">О нас</h1>
+  <h1 class="section-title">{{ t('common.about') }}</h1>
 
   <StatusMessage v-if="error" kind="error">
-    Не удалось загрузить страницу.
-    <template #actions><button type="button" class="btn" @click="refresh()">Повторить</button></template>
+    {{ t('about.loadError') }}
+    <template #actions><button type="button" class="btn" @click="refresh()">{{ t('common.retry') }}</button></template>
   </StatusMessage>
 
   <template v-else-if="data">
@@ -20,7 +21,7 @@ useSeoMeta({ title: 'О нас', description: () => data.value?.heading ?? undef
       <StrapiImage intrinsic v-if="data.image" :media="data.image" sizes="xs:100vw md:50vw xl:600px" priority img-class="w-full rounded-xl" />
     </section>
 
-    <PageSection v-if="data.partners.length" title="Наши партнёры">
+    <PageSection v-if="data.partners.length" :title="t('about.partners')">
       <ul class="space-y-10">
         <li v-for="(partner, i) in data.partners" :key="partner.name" class="grid items-center gap-8 md:grid-cols-2 md:gap-12">
           <div v-if="partner.image" :class="{ 'md:order-2': i % 2 === 1 }">
