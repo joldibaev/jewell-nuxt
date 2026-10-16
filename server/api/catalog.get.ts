@@ -4,7 +4,10 @@ export default defineCachedEventHandler(async (event): Promise<CatalogResponse> 
   const filters = parseCatalogQuery(getQuery(event))
   const locale = requestLocale(event)
   const translatedMatches = await translatedSearchIds(event, locale, filters.search)
-  const response = await strapiGet<ProductCard[]>(event, 'products', buildCatalogQuery(filters, translatedMatches))
+  const query = buildCatalogQuery(filters, translatedMatches)
+  const response = filters.sort === 'newest'
+    ? await letterOrderedCatalog(event, query, filters.page)
+    : await strapiGet<ProductCard[]>(event, 'products', query)
   if (!response.meta.pagination) {
     throw createError({ statusCode: 502, statusMessage: 'Invalid catalog response' })
   }

@@ -14,6 +14,9 @@ test('Nuxt server contract and SSR', async (t) => {
     gallery: [{ url: '/uploads/ring.jpg', alternativeText: null }],
     categories: [{ documentId: 'rings', name: 'Rings' }],
   }
+  const letterProducts = [...'ZYXWVUTSRQPONMLKJIHGFEDCBA'].map(value => ({
+    ...product, documentId: 'letter' + value, name: `Ожерелье с буквой «${value}»`, slug: 'letter-' + value.toLowerCase(),
+  }))
   const upstream = createServer((req, res) => {
     const url = new URL(req.url, 'http://localhost')
     requests.push(url)
@@ -33,6 +36,17 @@ test('Nuxt server contract and SSR', async (t) => {
     } else if (english) {
       data = [{ documentId: 'option1', name: 'English option' }, { documentId: 'rings', name: 'English option' }]
       pagination = { page, pageSize: 100, pageCount: 1, total: 2 }
+    } else if (url.pathname === '/api/products' && (
+      url.searchParams.get('filters[categories][documentId][$in][0]') === 'letters'
+      || url.searchParams.get('filters[$and][0][categories][documentId][$in][0]') === 'letters'
+    )) {
+      const selected = [...url.searchParams].filter(([key]) => key.startsWith('filters[$and][1][documentId][$in]')).map(([, value]) => value)
+      // Strapi may return cards in a different order; the API must follow the sorted index.
+      data = selected.length ? letterProducts.filter(item => selected.includes(item.documentId)) : letterProducts
+      pagination = { page, pageSize: 100, pageCount: 1, total: data.length }
+    } else if (url.pathname === '/api/products' && url.searchParams.get('fields[0]') === 'name' && url.searchParams.get('pagination[pageSize]') === '100') {
+      data = [product]
+      pagination = { page, pageSize: 100, pageCount: 1, total: 1 }
     } else if (url.pathname === '/api/products') {
       data = [product]
       pagination = { page, pageSize: 20, pageCount: 2, total: 21 }
@@ -84,6 +98,20 @@ test('Nuxt server contract and SSR', async (t) => {
     await delay(50)
   }
   assert.ok(ready, logs)
+
+  await t.test('letter variants are alphabetic across catalog pages and the index is reused', async () => {
+    const before = requests.length
+    const first = await (await fetch(base + '/api/catalog?categories=letters')).json()
+    const second = await (await fetch(base + '/api/catalog?categories=letters&page=2')).json()
+    assert.equal(first.products.length, 20)
+    assert.equal(first.products[0].name, 'Ожерелье с буквой «A»')
+    assert.equal(first.products.at(-1).name, 'Ожерелье с буквой «T»')
+    assert.deepEqual(second.products.map(p => p.documentId), [...'UVWXYZ'].map(value => 'letter' + value))
+    assert.deepEqual(second.pagination, { page: 2, pageSize: 20, pageCount: 2, total: 26 })
+    const sent = requests.slice(before)
+    assert.equal(sent.filter(url => url.searchParams.get('pagination[pageSize]') === '100').length, 1)
+    assert.ok(sent.every(url => url.searchParams.get('status') === 'published'))
+  })
 
   await t.test('combined filters reach Strapi and media URLs are normalized', async () => {
     const response = await fetch(base + '/api/catalog?categories=ring&categories=earring&gems=diamond&stock=no&minPrice=0&maxPrice=5000000&search=gold&page=2&sort=price-asc')

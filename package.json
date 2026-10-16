@@ -9,7 +9,7 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "typecheck": "nuxt typecheck",
-    "test": "pnpm build && node --test tests/recommendations.test.mjs tests/server.test.mjs"
+    "test": "pnpm build && node --test tests/recommendations.test.mjs tests/letter-order.test.mjs tests/server.test.mjs"
   },
   "dependencies": {
     "@nuxt/image": "^2.1.0",
