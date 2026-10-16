@@ -4,17 +4,17 @@ import { orderLetterVariants } from '../server/utils/letter-order.ts'
 
 const letter = (value, prefix = 'Ожерелье') => ({ documentId: prefix + value, name: `${prefix} с буквой «${value}»` })
 
-test('letter variants run A–Z without moving other models or mutating the input', () => {
+test('letter variants run consecutively in A–Z order; other products retain their relative order', () => {
   const other = { documentId: 'other', name: 'Ellips' }
   const source = [letter('D'), letter('S'), other, letter('N'), letter('M'), letter('A')]
   const result = orderLetterVariants(source)
-  assert.deepEqual(result.map(p => p.documentId), ['ОжерельеA', 'ОжерельеD', 'other', 'ОжерельеM', 'ОжерельеN', 'ОжерельеS'])
+  assert.deepEqual(result.map(p => p.documentId), ['ОжерельеA', 'ОжерельеD', 'ОжерельеM', 'ОжерельеN', 'ОжерельеS', 'other'])
   assert.equal(source[0].documentId, 'ОжерельеD')
 })
 
 test('models form separate groups; quoting and letter case do not affect alphabetic order', () => {
   const source = [letter('Z'), letter('D', 'Браслет'), { documentId: 'a', name: 'Ожерелье с буквой "a"' }, letter('A', 'Браслет')]
-  assert.deepEqual(orderLetterVariants(source).map(p => p.documentId), ['a', 'БраслетA', 'ОжерельеZ', 'БраслетD'])
+  assert.deepEqual(orderLetterVariants(source).map(p => p.documentId), ['a', 'ОжерельеZ', 'БраслетA', 'БраслетD'])
 })
 
 test('sorting precedes pagination, including when A is beyond page one', () => {

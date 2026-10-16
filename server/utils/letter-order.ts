@@ -3,23 +3,34 @@ interface NamedProduct {
   name: string
 }
 
-// Переставляем только варианты одной модели: посторонние товары остаются на своих местах.
-// Вызывается для всей выдачи до пагинации и до наложения переводов.
+// Собираем варианты одной модели в непрерывную группу и сортируем по букве.
+// Выполняется для полной выдачи до пагинации и до наложения переводов.
 export function orderLetterVariants<T extends NamedProduct>(products: T[]): T[] {
-  const groups = new Map<string, { positions: number[]; variants: { product: T; letter: string }[] }>()
+  const groups = new Map<string, { first: number; variants: { product: T; letter: string }[] }>()
+  const groupAt = new Map<number, string>()
   products.forEach((product, index) => {
     const match = /^(.*?буквой\s*)[«"“'‘]?([a-z])(?:[»"”'’]|(?=\s|$))(.*)$/iu.exec(product.name.trim())
     if (!match) return
-    const key = `${match[1]}\u0000${match[3]}`.toLowerCase().replace(/\s+/g, ' ')
-    const group = groups.get(key) ?? { positions: [], variants: [] }
-    group.positions.push(index)
+    const normalize = (part: string) => part.toLocaleLowerCase('ru').replace(/[^\p{L}\p{N}]+/gu, ' ').trim()
+    const key = `${normalize(match[1]!)}\u0000${normalize(match[3]!)}`
+    const group = groups.get(key) ?? { first: index, variants: [] }
     group.variants.push({ product, letter: match[2]!.toUpperCase() })
     groups.set(key, group)
+    groupAt.set(index, key)
   })
-  const ordered = [...products]
+
   for (const group of groups.values()) {
     group.variants.sort((a, b) => a.letter.localeCompare(b.letter, 'en'))
-    group.positions.forEach((position, index) => { ordered[position] = group.variants[index]!.product })
   }
-  return ordered
+  const result: T[] = []
+  products.forEach((product, index) => {
+    const key = groupAt.get(index)
+    if (!key) {
+      result.push(product)
+      return
+    }
+    const group = groups.get(key)!
+    if (index === group.first) result.push(...group.variants.map(variant => variant.product))
+  })
+  return result
 }
