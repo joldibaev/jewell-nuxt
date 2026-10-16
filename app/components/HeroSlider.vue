@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { Media } from '#shared/types/catalog'
+import type { Banner } from '#shared/types/catalog'
 import { A11y, Autoplay, Navigation, Pagination } from 'swiper/modules'
 import { Swiper, SwiperSlide } from 'swiper/vue'
 
-defineProps<{ banners: Media[] }>()
+defineProps<{ banners: Banner[] }>()
 const modules = [Navigation, Pagination, Autoplay, A11y]
 const { t } = useI18n()
 </script>
@@ -19,7 +19,13 @@ const { t } = useI18n()
     :a11y="{ prevSlideMessage: t('home.prevBanner'), nextSlideMessage: t('home.nextBanner') }"
     :aria-label="t('home.banners')"
   >
-    <SwiperSlide v-for="(banner, i) in banners" :key="banner.url">
+    <SwiperSlide v-for="(banner, i) in banners" :key="banner.url"
+      :style="{
+        '--banner-fit': banner.frames.mobile.fit,
+        '--banner-position': banner.frames.mobile.fit === 'contain' ? '50% 50%' : `${banner.frames.mobile.x}% ${banner.frames.mobile.y}%`,
+        '--banner-desktop-fit': banner.frames.desktop.fit,
+        '--banner-desktop-position': banner.frames.desktop.fit === 'contain' ? '50% 50%' : `${banner.frames.desktop.x}% ${banner.frames.desktop.y}%`,
+      }">
       <!-- Только первый баннер влияет на LCP: он грузится с высоким приоритетом, остальные лениво. -->
       <StrapiImage
         :media="banner"
@@ -31,3 +37,17 @@ const { t } = useI18n()
     </SwiperSlide>
   </Swiper>
 </template>
+
+<style scoped>
+.hero-swiper :deep(img) {
+  background: #f5f2ed;
+  object-fit: var(--banner-fit, cover);
+  object-position: var(--banner-position, 50% 50%);
+}
+@media (min-width: 1280px) {
+  .hero-swiper :deep(img) {
+    object-fit: var(--banner-desktop-fit, cover);
+    object-position: var(--banner-desktop-position, 50% 50%);
+  }
+}
+</style>

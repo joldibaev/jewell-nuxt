@@ -1,7 +1,8 @@
 import type { CatalogOption, HomeResponse, Media, ProductCard } from '../../shared/types/catalog'
 
 interface HomeDocument {
-  banners: Media[]
+  banners: (Media & { id: number })[]
+  bannerFrames?: unknown
   categories: CatalogOption[]
   collections: CatalogOption[]
 }
@@ -35,7 +36,7 @@ export default defineCachedEventHandler(async (event): Promise<HomeResponse> => 
     translateProducts(event, locale, inStockProducts),
   ])
   return {
-    banners: (home.data?.banners || []).map(media => normalizeMedia(event, media)),
+    banners: (home.data?.banners || []).map(media => ({ ...normalizeMedia(event, media), frames: normalizeBannerFrames(home.data?.bannerFrames, media.id) })),
     categories,
     collections,
     bestsellers: await publishedProductsByIds(event, (bestsellers.data?.products || []).map(product => product.documentId), locale),

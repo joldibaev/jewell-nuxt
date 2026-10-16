@@ -51,7 +51,11 @@ test('Nuxt server contract and SSR', async (t) => {
       data = [product]
       pagination = { page, pageSize: 20, pageCount: 2, total: 21 }
     } else if (url.pathname === '/api/home-page') {
-      data = { banners: [], categories: [], collections: [] }
+      data = {
+        banners: [{ id: 42, url: '/uploads/banner.jpg', width: 800, height: 1200 }, { id: 7, url: '/uploads/legacy.jpg' }],
+        bannerFrames: { 42: { desktop: { x: 50, y: 90, fit: 'cover' }, mobile: { x: 50, y: 50, fit: 'contain' } } },
+        categories: [], collections: [],
+      }
     } else if (url.pathname === '/api/bestseller') {
       data = { products: [product] }
     } else if (url.pathname === '/api/about-page') {
@@ -213,6 +217,20 @@ test('Nuxt server contract and SSR', async (t) => {
     assert.equal(response.status, 200)
     const body = await response.json()
     assert.equal(body.partners[0].image.url, upstreamUrl + '/uploads/p.png')
+  })
+
+  await t.test('homepage carries per-image framing to SSR with centered defaults for old banners', async () => {
+    const home = await (await fetch(base + '/api/home')).json()
+    assert.equal(home.banners[0].url, upstreamUrl + '/uploads/banner.jpg')
+    assert.deepEqual(home.banners[0].frames, {
+      desktop: { x: 50, y: 90, fit: 'cover' }, mobile: { x: 50, y: 50, fit: 'contain' },
+    })
+    assert.deepEqual(home.banners[1].frames, {
+      desktop: { x: 50, y: 50, fit: 'cover' }, mobile: { x: 50, y: 50, fit: 'cover' },
+    })
+    const html = await (await fetch(base + '/')).text()
+    assert.ok(html.includes('--banner-desktop-position:50% 90%'))
+    assert.ok(html.includes('--banner-fit:contain'))
   })
 
   await t.test('all four pages render SSR and no private token is serialized', async () => {

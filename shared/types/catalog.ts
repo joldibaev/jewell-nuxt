@@ -4,6 +4,14 @@ export interface Media {
   width?: number
   height?: number
 }
+export interface BannerFrame {
+  x: number
+  y: number
+  fit: 'cover' | 'contain'
+}
+export interface Banner extends Media {
+  frames: { desktop: BannerFrame; mobile: BannerFrame }
+}
 export interface CatalogOption {
   documentId: string
   name: string
@@ -80,7 +88,7 @@ export interface AboutPage {
   partners: AboutPartner[]
 }
 export interface HomeResponse {
-  banners: Media[]
+  banners: Banner[]
   categories: CatalogOption[]
   collections: CatalogOption[]
   bestsellers: ProductCard[]
