@@ -15,9 +15,11 @@ test('Nuxt server contract and SSR', async (t) => {
     galleryFrames: { 15: { x: 35, y: 90, fit: 'cover', zoom: 1.6 } },
     categories: [{ documentId: 'rings', name: 'Rings' }],
   }
-  const letterProducts = [...'ZYXWVUTSRQPONMLKJIHGFEDCBA'].map(value => ({
-    ...product, documentId: 'letter' + value, name: `Ожерелье с буквой «${value}»`, slug: 'letter-' + value.toLowerCase(),
-  }))
+  const catalogGroup = { documentId: 'sortgroup1', sortOrder: 1, sortMode: 'По алфавиту' }
+  const groupedProducts = [...Array(26)].map((_, index) => {
+    const value = 26 - index
+    return { ...product, documentId: 'item' + value, name: `Item ${String(value).padStart(2, '0')}`, slug: 'item-' + value }
+  })
   const upstream = createServer((req, res) => {
     const url = new URL(req.url, 'http://localhost')
     requests.push(url)
@@ -37,13 +39,10 @@ test('Nuxt server contract and SSR', async (t) => {
     } else if (english) {
       data = [{ documentId: 'option1', name: 'English option' }, { documentId: 'rings', name: 'English option' }]
       pagination = { page, pageSize: 100, pageCount: 1, total: 2 }
-    } else if (url.pathname === '/api/products' && (
-      url.searchParams.get('filters[categories][documentId][$in][0]') === 'letters'
-      || url.searchParams.get('filters[$and][0][categories][documentId][$in][0]') === 'letters'
-    )) {
-      const selected = [...url.searchParams].filter(([key]) => key.startsWith('filters[$and][1][documentId][$in]')).map(([, value]) => value)
+    } else if (url.pathname === '/api/products' && url.searchParams.get('filters[categories][documentId][$in][0]') === 'sorting-group') {
+      const selected = [...url.searchParams].filter(([key]) => key.startsWith('filters[documentId][$in]')).map(([, value]) => value)
       // Strapi may return cards in a different order; the API must follow the sorted index.
-      data = selected.length ? letterProducts.filter(item => selected.includes(item.documentId)) : letterProducts
+      data = selected.length ? groupedProducts.filter(item => selected.includes(item.documentId)) : groupedProducts.map(item => ({ ...item, catalogSortGroup: catalogGroup }))
       pagination = { page, pageSize: 100, pageCount: 1, total: data.length }
     } else if (url.pathname === '/api/products' && url.searchParams.get('fields[0]') === 'name' && url.searchParams.get('pagination[pageSize]') === '100') {
       data = [product]
@@ -104,14 +103,14 @@ test('Nuxt server contract and SSR', async (t) => {
   }
   assert.ok(ready, logs)
 
-  await t.test('letter variants are alphabetic across catalog pages and the index is reused', async () => {
+  await t.test('sort groups keep products in order across catalog pages and reuse the index', async () => {
     const before = requests.length
-    const first = await (await fetch(base + '/api/catalog?categories=letters')).json()
-    const second = await (await fetch(base + '/api/catalog?categories=letters&page=2')).json()
+    const first = await (await fetch(base + '/api/catalog?categories=sorting-group')).json()
+    const second = await (await fetch(base + '/api/catalog?categories=sorting-group&page=2')).json()
     assert.equal(first.products.length, 20)
-    assert.equal(first.products[0].name, 'Ожерелье с буквой «A»')
-    assert.equal(first.products.at(-1).name, 'Ожерелье с буквой «T»')
-    assert.deepEqual(second.products.map(p => p.documentId), [...'UVWXYZ'].map(value => 'letter' + value))
+    assert.equal(first.products[0].name, 'Item 01')
+    assert.equal(first.products.at(-1).name, 'Item 20')
+    assert.deepEqual(second.products.map(p => p.documentId), [21, 22, 23, 24, 25, 26].map(value => 'item' + value))
     assert.deepEqual(second.pagination, { page: 2, pageSize: 20, pageCount: 2, total: 26 })
     const sent = requests.slice(before)
     assert.equal(sent.filter(url => url.searchParams.get('pagination[pageSize]') === '100').length, 1)
