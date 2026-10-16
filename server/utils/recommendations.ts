@@ -113,6 +113,6 @@ export function pickRecommendations(
 
 // Чистый ProductCard без полей, нужных только для подсчёта сходства: они не должны уходить клиенту.
 export function toProductCard(product: RecommendationSource): ProductCard {
-  const { documentId, name, slug, priceUzs, inStock, previewPosition, gallery, brand } = product
-  return { documentId, name, slug, priceUzs, inStock, previewPosition, gallery, brand: brand ? { name: brand.name } : brand }
+  const { documentId, name, slug, priceUzs, inStock, previewPosition, gallery, galleryFrames, brand } = product
+  return { documentId, name, slug, priceUzs, inStock, previewPosition, gallery, ...(galleryFrames == null ? {} : { galleryFrames }), brand: brand ? { name: brand.name } : brand }
 }

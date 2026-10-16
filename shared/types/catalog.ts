@@ -1,4 +1,6 @@
 export interface Media {
+  id?: number
+  cardFrame?: BannerFrame
   url: string
   alternativeText: string | null
   width?: number
@@ -8,6 +10,7 @@ export interface BannerFrame {
   x: number
   y: number
   fit: 'cover' | 'contain'
+  zoom?: number
 }
 export interface Banner extends Media {
   frames: { desktop: BannerFrame; mobile: BannerFrame }
@@ -26,6 +29,8 @@ export interface ProductCard {
   priceUzs: string | number
   inStock: boolean
   previewPosition: PreviewPosition | null
+  /** Raw Strapi settings; removed after attaching frames to gallery images. */
+  galleryFrames?: unknown
   gallery: Media[]
   brand?: { documentId?: string; name: string } | null
 }

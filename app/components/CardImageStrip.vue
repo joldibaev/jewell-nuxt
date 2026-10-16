@@ -38,8 +38,15 @@ function onScroll() {
   <div class="relative mb-4 aspect-4/3 overflow-hidden rounded-[10px] bg-neutral-300" @pointerenter="activate" @touchstart.passive="activate" @focusin="activate">
     <component :is="to ? NuxtLink : 'div'" :to="to" :tabindex="to ? -1 : undefined" :aria-hidden="to ? true : undefined" class="relative z-10 block size-full">
       <div ref="scroller" class="flex size-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" @scroll.passive="onScroll">
-        <div v-for="(image, i) in slides" :key="image.url" class="size-full shrink-0 snap-center">
-          <StrapiImage :media="image" :sizes="sizes" :priority="false" :img-class="`size-full object-cover ${positionClass ?? ''}`" :alt="i === 0 ? undefined : ''" />
+        <div v-for="(image, i) in slides" :key="image.url" class="size-full shrink-0 snap-center overflow-hidden">
+          <StrapiImage :media="image" :sizes="sizes" :priority="false" :img-class="`size-full object-cover ${positionClass ?? ''}`" :alt="i === 0 ? undefined : ''"
+            :style="image.cardFrame ? {
+              objectFit: image.cardFrame.fit,
+              objectPosition: image.cardFrame.fit === 'contain' ? '50% 50%' : `${image.cardFrame.x}% ${image.cardFrame.y}%`,
+              transform: image.cardFrame.fit === 'contain' ? undefined : `scale(${image.cardFrame.zoom ?? 1})`,
+              transformOrigin: `${image.cardFrame.x}% ${image.cardFrame.y}%`,
+              background: '#f5f2ed',
+            } : undefined" />
         </div>
       </div>
     </component>

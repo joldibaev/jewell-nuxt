@@ -11,7 +11,8 @@ test('Nuxt server contract and SSR', async (t) => {
   const product = {
     documentId: 'product1', name: 'Test ring', slug: 'test-ring', description: null,
     priceUzs: '2500000', inStock: true, previewPosition: 'По центру',
-    gallery: [{ url: '/uploads/ring.jpg', alternativeText: null }],
+    gallery: [{ id: 15, url: '/uploads/ring.jpg', alternativeText: null }, { id: 16, url: '/uploads/ring-alt.jpg', alternativeText: null }],
+    galleryFrames: { 15: { x: 35, y: 90, fit: 'cover', zoom: 1.6 } },
     categories: [{ documentId: 'rings', name: 'Rings' }],
   }
   const letterProducts = [...'ZYXWVUTSRQPONMLKJIHGFEDCBA'].map(value => ({
@@ -53,7 +54,7 @@ test('Nuxt server contract and SSR', async (t) => {
     } else if (url.pathname === '/api/home-page') {
       data = {
         banners: [{ id: 42, url: '/uploads/banner.jpg', width: 800, height: 1200 }, { id: 7, url: '/uploads/legacy.jpg' }],
-        bannerFrames: { 42: { desktop: { x: 50, y: 90, fit: 'cover' }, mobile: { x: 50, y: 50, fit: 'contain' } } },
+        bannerFrames: { 42: { desktop: { x: 50, y: 90, fit: 'cover', zoom: 2 }, mobile: { x: 50, y: 50, fit: 'contain' } } },
         categories: [], collections: [],
       }
     } else if (url.pathname === '/api/bestseller') {
@@ -219,11 +220,29 @@ test('Nuxt server contract and SSR', async (t) => {
     assert.equal(body.partners[0].image.url, upstreamUrl + '/uploads/p.png')
   })
 
+  await t.test('product crops reach every card endpoint and SSR while original media stays available', async () => {
+    const expected = { x: 35, y: 90, fit: 'cover', zoom: 1.6 }
+    const catalog = await (await fetch(base + '/api/catalog')).json()
+    const favorites = await (await fetch(base + '/api/favorites?ids=product1')).json()
+    const detail = await (await fetch(base + '/api/products/test-ring')).json()
+    const home = await (await fetch(base + '/api/home')).json()
+    for (const item of [catalog.products[0], favorites[0], detail, ...detail.related, ...home.bestsellers, ...home.inStock]) {
+      assert.deepEqual(item.gallery[0].cardFrame, expected)
+      assert.equal(item.gallery[0].url, upstreamUrl + '/uploads/ring.jpg')
+      assert.equal(item.gallery[1].cardFrame, undefined)
+      assert.equal(item.galleryFrames, undefined)
+    }
+    const html = await (await fetch(base + '/catalogs')).text()
+    assert.ok(html.includes('object-position:35% 90%'))
+    assert.ok(html.includes('transform:scale(1.6)'))
+    assert.ok(requests.some(url => [...url.searchParams].some(([key, value]) => key.startsWith('fields[') && value === 'galleryFrames')))
+  })
+
   await t.test('homepage carries per-image framing to SSR with centered defaults for old banners', async () => {
     const home = await (await fetch(base + '/api/home')).json()
     assert.equal(home.banners[0].url, upstreamUrl + '/uploads/banner.jpg')
     assert.deepEqual(home.banners[0].frames, {
-      desktop: { x: 50, y: 90, fit: 'cover' }, mobile: { x: 50, y: 50, fit: 'contain' },
+      desktop: { x: 50, y: 90, fit: 'cover', zoom: 2 }, mobile: { x: 50, y: 50, fit: 'contain' },
     })
     assert.deepEqual(home.banners[1].frames, {
       desktop: { x: 50, y: 50, fit: 'cover' }, mobile: { x: 50, y: 50, fit: 'cover' },
@@ -231,6 +250,7 @@ test('Nuxt server contract and SSR', async (t) => {
     const html = await (await fetch(base + '/')).text()
     assert.ok(html.includes('--banner-desktop-position:50% 90%'))
     assert.ok(html.includes('--banner-fit:contain'))
+    assert.ok(html.includes('--banner-desktop-zoom:2'))
   })
 
   await t.test('all four pages render SSR and no private token is serialized', async () => {

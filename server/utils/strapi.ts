@@ -56,10 +56,15 @@ export function normalizeOption(event: H3Event, option: CatalogOption): CatalogO
   return { ...option, image: option.image ? normalizeMedia(event, option.image) : option.image }
 }
 export function normalizeProduct(event: H3Event, product: ProductCard): ProductCard {
-  return { ...product, gallery: (product.gallery || []).map(media => normalizeMedia(event, media)) }
+  const { galleryFrames, ...data } = product
+  const frames = galleryFrames && typeof galleryFrames === 'object' && !Array.isArray(galleryFrames) ? galleryFrames as Record<string, unknown> : {}
+  return { ...data, gallery: (product.gallery || []).map(media => {
+    const settings = media.id == null ? undefined : frames[String(media.id)]
+    return { ...normalizeMedia(event, media), ...(settings == null ? {} : { cardFrame: normalizeImageFrame(settings) }) }
+  }) }
 }
 export const productCardQuery: StrapiQuery = {
-  fields: ['name', 'slug', 'priceUzs', 'inStock', 'previewPosition'],
+  fields: ['name', 'slug', 'priceUzs', 'inStock', 'previewPosition', 'galleryFrames'],
   populate: {
     gallery: { fields: ['url', 'alternativeText', 'width', 'height'] },
     brand: { fields: ['name'] },

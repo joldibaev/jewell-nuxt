@@ -47,7 +47,7 @@ export default defineCachedEventHandler(async (event): Promise<ProductDetail> =>
   const response = await strapiGet<RawProduct[]>(event, 'products', {
     status: 'published',
     filters: { slug: { $eq: slug } },
-    fields: ['name', 'slug', 'description', 'code', 'priceUzs', 'inStock', 'weight', 'lengthMin', 'lengthMax', 'previewPosition'],
+    fields: ['name', 'slug', 'description', 'code', 'priceUzs', 'inStock', 'weight', 'lengthMin', 'lengthMax', 'previewPosition', 'galleryFrames'],
     populate: {
       gallery: { fields: ['url', 'alternativeText', 'width', 'height'] },
       brand: { fields: ['name'] },
